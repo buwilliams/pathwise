@@ -116,8 +116,10 @@ const views = (() => {
           oninput: (e) => { data.first_name = e.target.value; refresh(); },
         }),
       ),
-      el("div", { class: "field" },
-        el("label", {}, "Gender"),
+      el("div", { class: "field", role: "radiogroup", "aria-labelledby": "onb-gender-label" },
+        // Not a <label> — there's no single input to associate with; the
+        // radios inside genderRadio carry their own labels.
+        el("div", { id: "onb-gender-label", class: "field-label" }, "Gender"),
         el("div", { class: "choice-list" },
           genderRadio("female", "Female"),
           genderRadio("male", "Male"),
@@ -129,6 +131,7 @@ const views = (() => {
         el("p", { class: "help" }, "Helps us look up real prices and programs near you."),
         el("input", {
           id: "zip", type: "text", inputmode: "numeric", maxlength: "5",
+          autocomplete: "postal-code",
           placeholder: "30301",
           oninput: (e) => { data.zip_code = e.target.value.replace(/\D/g, "").slice(0, 5); e.target.value = data.zip_code; },
         }),
@@ -365,8 +368,21 @@ const views = (() => {
   }
 
   function questionField(q, currentValue, onChange) {
-    const wrap = el("div", { class: "field" },
-      el("label", { for: `q-${q.key}` }, q.prompt + (q.required ? "" : "  (optional)")),
+    // Only `text` and the numeric variants render a single input we can
+    // associate with via for=. Group-style answers (single_choice,
+    // multi_choice, yes_no, scale) get a non-label heading so we don't emit
+    // an orphan <label for> that points at no element.
+    const labelText = q.prompt + (q.required ? "" : "  (optional)");
+    const labelHasMatchingInput =
+      q.type === "text" || q.type === "number" ||
+      q.type === "money" || q.type === "hours";
+    const fieldAttrs = labelHasMatchingInput
+      ? { class: "field" }
+      : { class: "field", role: "group", "aria-labelledby": `qlabel-${q.key}` };
+    const wrap = el("div", fieldAttrs,
+      labelHasMatchingInput
+        ? el("label", { for: `q-${q.key}` }, labelText)
+        : el("div", { id: `qlabel-${q.key}`, class: "field-label" }, labelText),
       q.help && el("p", { class: "help" }, q.help),
     );
 
@@ -550,6 +566,7 @@ const views = (() => {
       class: "chat-input",
       rows: "2",
       placeholder: "Ask a question…",
+      "aria-label": "Message",
       onkeydown: (e) => {
         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
       },
@@ -660,12 +677,13 @@ const views = (() => {
         el("div", { class: "field" },
           el("label", { for: "name" }, "First name"),
           el("input", {
-            id: "name", type: "text", value: data.first_name,
+            id: "name", type: "text", autocomplete: "given-name",
+            value: data.first_name,
             oninput: (e) => { data.first_name = e.target.value; markDirty(); },
           }),
         ),
-        el("div", { class: "field" },
-          el("label", {}, "Gender"),
+        el("div", { class: "field", role: "radiogroup", "aria-labelledby": "settings-gender-label" },
+          el("div", { id: "settings-gender-label", class: "field-label" }, "Gender"),
           el("div", { class: "choice-list" },
             genderRadio("female", "Female"),
             genderRadio("male", "Male"),
@@ -677,6 +695,7 @@ const views = (() => {
           el("p", { class: "help" }, "Helps us look up real prices and programs near you."),
           el("input", {
             id: "zip", type: "text", inputmode: "numeric", maxlength: "5",
+            autocomplete: "postal-code",
             value: data.zip_code,
             oninput: (e) => {
               data.zip_code = e.target.value.replace(/\D/g, "").slice(0, 5);
