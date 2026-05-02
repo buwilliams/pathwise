@@ -90,9 +90,13 @@
         try {
           const res = await api.verifyCode(phone, code);
           api.setToken(res.session_token);
-          phoneInFlight.clear();
-          if (res.needs_onboarding) location.hash = "#/onboarding";
-          else location.hash = "#/home";
+          if (res.needs_onboarding) {
+            // Keep phoneInFlight — the onboarding form needs it for POST /me/onboard.
+            location.hash = "#/onboarding";
+          } else {
+            phoneInFlight.clear();
+            location.hash = "#/home";
+          }
         } catch (e) { views.toast(e.message, "error"); }
       },
       async () => {

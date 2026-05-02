@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import asdict
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -31,7 +30,7 @@ def get_answers(
     qs = QuestionnaireService(store)
     answers = qs.get_answers(user_id, pack.id)
     completion = qs.completion(user_id, pack)
-    return {"answers": answers, "completion": asdict(completion)}
+    return {"answers": answers, "completion": completion.to_dict()}
 
 
 @router.put("")
@@ -51,4 +50,4 @@ def put_answers(
     except (AnswerValidationError, KeyError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     completion = qs.completion(user_id, pack)
-    return {"answers": merged, "completion": asdict(completion)}
+    return {"answers": merged, "completion": completion.to_dict()}

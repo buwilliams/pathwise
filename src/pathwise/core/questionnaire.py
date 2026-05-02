@@ -25,6 +25,16 @@ class CompletionStatus:
             return 100
         return int(round(100 * (self.required_total - len(self.missing_required)) / self.required_total))
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "answered": self.answered,
+            "required_total": self.required_total,
+            "optional_total": self.optional_total,
+            "missing_required": list(self.missing_required),
+            "percent": self.percent,
+            "is_complete": self.is_complete,
+        }
+
 
 class AnswerValidationError(ValueError):
     pass

@@ -156,28 +156,43 @@ const views = (() => {
     );
   }
 
-  // ───────── Questionnaire ─────────
+  // ───────── Questionnaire (one section per step) ─────────
   function questionnaire(pack, answers, completion, onAnswer, onGenerate) {
     const root = el("div", {});
-
-    const progressBar = el("span", { style: `width: ${completion.percent}%` });
-    const progressLabel = el("p", { class: "progress-label" },
-      `${completion.percent}% — ${completion.required_total - completion.missing_required.length} of ${completion.required_total} required answered`
+    const sections = pack.sections.filter(sec =>
+      pack.questions.some(q => q.section === sec.id)
     );
+    const totalSteps = sections.length;
+    let currentIdx = 0;
+    let isComplete = !!completion.is_complete;
+
+    const stepLabel = el("p", { class: "progress-label", style: "margin-bottom: var(--space-2);" }, "");
+    const progressBar = el("span", { style: `width: ${completion.percent}%` });
+    let currentPct = completion.percent;
+
+    function updateStepLabel() {
+      stepLabel.textContent = `Step ${currentIdx + 1} of ${totalSteps} (${currentPct}%)`;
+    }
+    function setProgress(pct) {
+      currentPct = pct;
+      progressBar.style.width = pct + "%";
+      updateStepLabel();
+    }
+
     root.appendChild(el("div", {},
+      stepLabel,
       el("div", { class: "progress" }, progressBar),
-      progressLabel,
     ));
 
-    const updateProgress = (pct, answered, total) => {
-      progressBar.style.width = pct + "%";
-      progressLabel.textContent = `${pct}% — ${answered} of ${total} required answered`;
-    };
+    const body = el("div", {});
+    root.appendChild(body);
 
-    const sections = pack.sections;
-    for (const sec of sections) {
+    function renderStep() {
+      const sec = sections[currentIdx];
+      const isLast = currentIdx === totalSteps - 1;
+      updateStepLabel();
+
       const sectionQs = pack.questions.filter(q => q.section === sec.id);
-      if (!sectionQs.length) continue;
       const sectionEl = card(
         el("h2", {}, sec.title),
         sec.blurb && el("p", { class: "section-blurb" }, sec.blurb),
@@ -185,29 +200,37 @@ const views = (() => {
           try {
             const res = await onAnswer(q.key, val);
             answers[q.key] = res.answers[q.key];
-            updateProgress(
-              res.completion.percent,
-              res.completion.required_total - res.completion.missing_required.length,
-              res.completion.required_total,
-            );
-            generateBtn.disabled = !res.completion.is_complete;
+            isComplete = !!res.completion.is_complete;
+            setProgress(res.completion.percent);
+            if (isLast) primaryBtn.disabled = !isComplete;
           } catch (e) { toast(e.message, "error"); }
         })),
       );
-      root.appendChild(sectionEl);
+
+      const backBtn = el("button", {
+        class: "btn btn-secondary",
+        onclick: () => { if (currentIdx > 0) { currentIdx -= 1; renderStep(); } },
+      }, "Back");
+      backBtn.disabled = currentIdx === 0;
+
+      const primaryBtn = isLast
+        ? el("button", { class: "btn btn-accent", onclick: onGenerate }, "Generate my plan")
+        : el("button", {
+            class: "btn",
+            onclick: () => { currentIdx += 1; renderStep(); },
+          }, "Next");
+      if (isLast) primaryBtn.disabled = !isComplete;
+
+      const nav = el("div", {
+        class: "btn-row",
+        style: "flex-direction: row; gap: var(--space-3); margin-top: var(--space-4);",
+      }, backBtn, primaryBtn);
+
+      body.replaceChildren(sectionEl, nav);
+      window.scrollTo({ top: 0, behavior: "instant" });
     }
 
-    const generateBtn = el("button", {
-      class: "btn btn-accent",
-      onclick: onGenerate,
-    }, "Generate my plan");
-    generateBtn.disabled = !completion.is_complete;
-
-    root.appendChild(card(
-      el("p", { class: "lede" }, "When you're ready, we'll think it through and write you a plan. You can always revise."),
-      el("div", { class: "btn-row" }, generateBtn),
-    ));
-
+    renderStep();
     return root;
   }
 
