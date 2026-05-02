@@ -132,7 +132,7 @@ const views = (() => {
         el("input", {
           id: "zip", type: "text", inputmode: "numeric", maxlength: "5",
           autocomplete: "postal-code",
-          placeholder: "30301",
+          placeholder: "5 digits",
           oninput: (e) => { data.zip_code = e.target.value.replace(/\D/g, "").slice(0, 5); e.target.value = data.zip_code; },
         }),
       ),
