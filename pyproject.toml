@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pathwise"
+version = "0.1.0"
+description = "Pathwise — a life-strategy planner for teens. One step at a time, on purpose."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "typer>=0.13",
+    "anthropic>=0.40",
+    "twilio>=9.3",
+    "jinja2>=3.1",
+    "PyYAML>=6.0",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "python-multipart>=0.0.12",
+    "phonenumbers>=8.13",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+    "mypy>=1.13",
+    "ruff>=0.8",
+    "types-PyYAML>=6.0",
+]
+
+[project.scripts]
+pathwise = "pathwise.cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pathwise"]
+
+[tool.hatch.build]
+include = [
+    "src/pathwise/**/*.py",
+    "src/pathwise/seasons/**/*.toml",
+    "src/pathwise/seasons/**/*.yaml",
+    "src/pathwise/seasons/**/*.md",
+    "src/pathwise/frontend/**/*",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "llm: marks tests that make real LLM API calls (deselect with '-m \"not llm\"')",
+    "integration: marks integration tests",
+]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = []

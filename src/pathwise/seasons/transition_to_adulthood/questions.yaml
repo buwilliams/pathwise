@@ -1,0 +1,241 @@
+sections:
+  - id: now
+    title: "Where you are now"
+    blurb: "Quick snapshot. We're not judging — we're getting honest numbers so the plan is real."
+  - id: car
+    title: "About a car"
+    blurb: "A car can unlock a lot. It can also drain a lot."
+  - id: money
+    title: "Money comfort"
+    blurb: "How much pressure feels okay, and where your floor is."
+  - id: work
+    title: "Work and income"
+  - id: skills
+    title: "Skills and what's next"
+  - id: move
+    title: "About moving out"
+  - id: life
+    title: "Life and energy"
+  - id: future
+    title: "Future you"
+
+questions:
+  # ── Now ────────────────────────────────────────────────────────────
+  - key: current_savings
+    section: now
+    type: money
+    prompt: "Roughly how much do you have in savings right now?"
+    help: "Total of checking, savings, cash. Round to the nearest hundred."
+    min: 0
+
+  - key: current_monthly_take_home
+    section: now
+    type: money
+    prompt: "About how much do you take home each month from work?"
+    help: "After taxes. If it varies, give a typical month. Put 0 if you don't work right now."
+    min: 0
+
+  - key: current_monthly_bills
+    section: now
+    type: money
+    prompt: "About how much do you spend each month on bills and stuff you have to pay?"
+    help: "Phone, subscriptions, gas, food you buy. Skip rent for now — that comes next."
+    min: 0
+
+  - key: lives_with_parents
+    section: now
+    type: yes_no
+    prompt: "Do you currently live with a parent or family member?"
+
+  - key: has_car
+    section: now
+    type: yes_no
+    prompt: "Do you have your own car right now?"
+
+  # ── Car ────────────────────────────────────────────────────────────
+  - key: car_purpose
+    section: car
+    type: multi_choice
+    required: false
+    prompt: "If you had a car, what would it unlock? (pick any)"
+    options:
+      - { value: work, label: "Getting to / from work" }
+      - { value: school, label: "School or training" }
+      - { value: friends, label: "Seeing friends" }
+      - { value: freedom, label: "Just freedom to go" }
+      - { value: privacy, label: "Privacy / space" }
+      - { value: errands, label: "Errands and appointments" }
+
+  - key: car_max_savings_spend
+    section: car
+    type: money
+    required: false
+    prompt: "What's the most of your savings you'd feel okay spending on a car?"
+    help: "Total — purchase price + tax + first insurance payment."
+    min: 0
+
+  - key: car_repair_1k_reaction
+    section: car
+    type: single_choice
+    required: false
+    prompt: "If the car needed a $1,000 repair three months after you bought it, how would you feel?"
+    options:
+      - { value: fine, label: "Annoying, but fine" }
+      - { value: stressed, label: "Stressed but I'd handle it" }
+      - { value: scary, label: "Scary — would mess me up" }
+      - { value: catastrophic, label: "I literally couldn't pay it" }
+
+  # ── Money ──────────────────────────────────────────────────────────
+  - key: emergency_fund_floor
+    section: money
+    type: money
+    prompt: "What's the lowest you'd let your savings drop before it would feel scary?"
+    help: "Your emotional 'don't go below this' line."
+    min: 0
+
+  - key: monthly_pressure_comfort
+    section: money
+    type: single_choice
+    prompt: "How much monthly money pressure feels okay to you?"
+    options:
+      - { value: zero, label: "I want zero stress about money each month" }
+      - { value: mild, label: "A little tightness is fine" }
+      - { value: moderate, label: "I can handle real pressure if it's worth it" }
+      - { value: high, label: "Bring it on — I'll work harder if I have to" }
+
+  # ── Work ───────────────────────────────────────────────────────────
+  - key: current_job_feeling
+    section: work
+    type: single_choice
+    prompt: "How do you feel about your current job?"
+    options:
+      - { value: love, label: "I really like it" }
+      - { value: ok, label: "It's fine for now" }
+      - { value: tolerate, label: "I tolerate it for the money" }
+      - { value: hate, label: "I want out" }
+      - { value: none, label: "I don't have one yet" }
+
+  - key: hours_preference
+    section: work
+    type: single_choice
+    prompt: "Right now, do you want to work…"
+    options:
+      - { value: more, label: "More hours" }
+      - { value: same, label: "About the same" }
+      - { value: less, label: "Fewer hours" }
+
+  - key: desired_two_year_income
+    section: work
+    type: money
+    required: false
+    prompt: "Two years from now, what monthly income would feel like 'I made it'?"
+    help: "Take-home, your number. There's no right answer."
+    min: 0
+
+  # ── Skills ─────────────────────────────────────────────────────────
+  - key: interested_in_training
+    section: skills
+    type: yes_no
+    prompt: "Are you open to training, school, or a certificate that could raise your income?"
+
+  - key: training_modality
+    section: skills
+    type: single_choice
+    required: false
+    prompt: "If you did train, what kind sounds most like you?"
+    options:
+      - { value: hands_on, label: "Hands-on / apprenticeship" }
+      - { value: certificate, label: "Short certificate program" }
+      - { value: online, label: "Online courses" }
+      - { value: community_college, label: "Community college" }
+      - { value: four_year, label: "4-year college" }
+      - { value: not_sure, label: "Not sure yet" }
+
+  - key: max_training_months
+    section: skills
+    type: number
+    required: false
+    prompt: "How many months of training would you be willing to do?"
+    min: 0
+    max: 60
+    unit: "months"
+
+  - key: interests
+    section: skills
+    type: text
+    required: false
+    prompt: "What kinds of work or activities feel interesting to you? (a few words is plenty)"
+    placeholder: "e.g. animals, coding, cars, helping people, building stuff"
+
+  # ── Move out ───────────────────────────────────────────────────────
+  - key: move_out_urgency
+    section: move
+    type: scale
+    prompt: "How much do you want to move out soon?"
+    help: "1 = I'm fine where I am. 5 = I need out."
+    min: 1
+    max: 5
+
+  - key: move_out_horizon
+    section: move
+    type: single_choice
+    prompt: "When would you ideally move out?"
+    options:
+      - { value: now, label: "As soon as possible" }
+      - { value: 6mo, label: "Within 6 months" }
+      - { value: 1yr, label: "Within a year" }
+      - { value: 2yr, label: "Within 2 years" }
+      - { value: later, label: "Whenever it makes sense" }
+
+  - key: rent_max_share_of_income
+    section: move
+    type: number
+    required: false
+    prompt: "What's the most of your monthly income you'd spend on rent?"
+    help: "As a percentage. (Most experts say 30% is the safe ceiling.)"
+    min: 0
+    max: 100
+    unit: "%"
+
+  # ── Life ───────────────────────────────────────────────────────────
+  - key: productive_hours_per_week
+    section: life
+    type: hours
+    prompt: "Outside of work or school, how many hours a week feel actually productive for you?"
+    help: "Not zoned-out tired hours — hours where you can actually do things."
+    min: 0
+    max: 80
+
+  - key: quality_of_time_now
+    section: life
+    type: scale
+    prompt: "Right now, how good is the quality of your free time and energy?"
+    help: "1 = drained and scattered. 5 = rested and ready."
+    min: 1
+    max: 5
+
+  # ── Future ─────────────────────────────────────────────────────────
+  - key: top_value
+    section: future
+    type: single_choice
+    prompt: "Of these, which feels most important to you right now?"
+    options:
+      - { value: independence, label: "Independence — running my own life" }
+      - { value: net_worth, label: "Building savings and net worth" }
+      - { value: enjoyment, label: "Enjoying life and friends" }
+      - { value: goals, label: "Making real progress on goals" }
+      - { value: stability, label: "Feeling safe and stable" }
+
+  - key: one_year_proud_of
+    section: future
+    type: text
+    required: false
+    prompt: "A year from now, what would you love to be able to say you did?"
+    placeholder: "e.g. saved $5k, finished a course, moved out, learned to drive"
+
+  - key: top_fear
+    section: future
+    type: text
+    required: false
+    prompt: "What's the thing you most want to avoid happening in the next year?"
+    placeholder: "e.g. broke, stuck, working a job I hate, drifting"

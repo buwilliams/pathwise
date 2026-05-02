@@ -1,0 +1,52 @@
+# Candidate scenarios from emma-life-strategy-model.md §Candidate Scenarios.
+# Concrete dollar figures get filled in at plan time from the research bundle
+# (local rent, used-car prices, certificate program tuition, etc.).
+scenarios:
+  - id: stay_no_car_save
+    label: "Stay home, no car, save aggressively"
+    description: "Keep current housing, skip the car for now, route most income to savings and skill-building."
+    car: false
+    moves_out: false
+    income_growth: false
+
+  - id: stay_modest_car
+    label: "Stay home, modest reliable car, preserve buffer"
+    description: "Buy a reliable used car well under your savings cap; keep a healthy emergency fund."
+    car: true
+    moves_out: false
+    income_growth: false
+
+  - id: move_out_with_car
+    label: "Move out and buy a car"
+    description: "Take both forms of independence at once. Highest fragility risk for most income levels."
+    car: true
+    moves_out: true
+    income_growth: false
+
+  - id: move_out_no_car
+    label: "Move out, no car"
+    description: "Lower-rent place close to work or transit. Trades mobility for residential independence."
+    car: false
+    moves_out: true
+    income_growth: false
+
+  - id: low_rent_modest_car_grow_income
+    label: "Stay low-rent, modest car, grow income, move out later"
+    description: "The independence-ladder path: build mobility and financial independence first, take residential independence later from a stronger position."
+    car: true
+    moves_out: false
+    income_growth: true
+
+  - id: work_more_save_more
+    label: "Work more hours, save aggressively, delay car"
+    description: "Pure cash-flow play. Builds buffer fast; lower long-run upside than skill-building."
+    car: false
+    moves_out: false
+    income_growth: false
+
+  - id: train_for_better_income
+    label: "Add training or school, delay apartment"
+    description: "Invest in a skill / credential path that raises future income before taking on more fixed costs."
+    car: false
+    moves_out: false
+    income_growth: true

@@ -1,0 +1,14 @@
+# Momentum-score weights, taken directly from the suggested table in
+# emma-life-strategy-model.md §Momentum Score. Higher = more important.
+# Cash flow, risk buffer, and emotional stability are weighted highest because
+# when they collapse the whole life-state becomes fragile.
+weights:
+  i: 2   # independence (composite)
+  n: 3   # positive net worth
+  e: 2   # enjoyable life
+  g: 3   # goal progress
+  s: 4   # stability / emotional safety
+  p: 2   # productive time
+  c: 4   # cash flow
+  r: 4   # risk buffer
+  y: 3   # income

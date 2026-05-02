@@ -1,0 +1,39 @@
+:root {
+  /* Brand palette */
+  --ink:        #0F1B2D;
+  --ink-soft:   #2A3447;
+  --ink-mute:   #5C6679;
+  --cream:      #F7F4EE;
+  --cream-soft: #EFEAE0;
+  --paper:      #FFFFFF;
+  --terracotta: #E8985C;
+  --terracotta-soft: #F4D2B0;
+  --sage:       #7B9981;
+  --warn:       #B7472A;
+
+  /* Type */
+  --serif: "Source Serif Pro", "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Spacing — tight on mobile, breathes on larger */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Layout */
+  --radius:   12px;
+  --radius-sm: 8px;
+  --tap:      44px;
+  --max-w:    540px;
+
+  /* Motion */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
