@@ -43,8 +43,11 @@ const api = (() => {
     // High-level endpoints
     startCode: (phone)         => request("POST", "/auth/start", { phone }),
     verifyCode: (phone, code)  => request("POST", "/auth/verify", { phone, code }),
+    revokeSession:               () => request("POST", "/auth/revoke"),
     me:                          () => request("GET", "/me"),
     onboard: (data)            => request("POST", "/me/onboard", data),
+    updateMe: (data)           => request("PATCH", "/me", data),
+    deleteMe:                    () => request("DELETE", "/me"),
     seasons:                     () => request("GET", "/seasons"),
     questions: (seasonId)      => request("GET", `/seasons/${seasonId}/questions`),
     getAnswers: (seasonId)     => request("GET", `/seasons/${seasonId}/answers`),

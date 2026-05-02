@@ -3,17 +3,31 @@
 (() => {
   const root = document.getElementById("view");
   const logoutBtn = document.getElementById("logout-btn");
+  const headerNav = document.getElementById("header-nav");
   const SEASON = "transition-to-adulthood"; // only one for now
-  let phoneInFlight = ""; // remembered between welcome → code
+
+  // phoneInFlight persists across page refreshes so a refresh on /auth/code
+  // doesn't dump the user back to the start. Cleared on successful verify or
+  // when they explicitly start over.
+  const PHONE_KEY = "pathwise.phone_in_flight";
+  const phoneInFlight = {
+    get: () => sessionStorage.getItem(PHONE_KEY) || "",
+    set: (v) => sessionStorage.setItem(PHONE_KEY, v),
+    clear: () => sessionStorage.removeItem(PHONE_KEY),
+  };
 
   function show(node) {
     root.replaceChildren(node);
     window.scrollTo({ top: 0, behavior: "instant" });
   }
 
-  function setLogoutVisible(v) { logoutBtn.hidden = !v; }
-  logoutBtn.addEventListener("click", () => {
+  function setLogoutVisible(v) { headerNav.hidden = !v; }
+  logoutBtn.addEventListener("click", async () => {
+    // Best-effort: tell the server to invalidate the token, but always clear
+    // the local copy so the user is logged out client-side even if offline.
+    try { await api.revokeSession(); } catch (_) {}
     api.clearToken();
+    phoneInFlight.clear();
     location.hash = "#/";
   });
 
@@ -40,8 +54,12 @@
 
       if (route === "" || route === "home") return showHome(me);
       if (route === "onboarding") return showOnboarding();
+      if (route === "settings") return showSettings(me);
       if (route.startsWith("season/")) return showQuestionnaire(me, SEASON);
+      if (route === "plans") return showPlanHistory(me, SEASON);
       if (route === "plan") return showLatestPlan(me, SEASON);
+      const planMatch = route.match(/^plan\/(\d+)$/);
+      if (planMatch) return showPlanVersion(me, SEASON, parseInt(planMatch[1], 10));
       // unknown — back home
       return showHome(me);
     } catch (e) {
@@ -56,7 +74,7 @@
     show(views.welcome(async (phone) => {
       try {
         await api.startCode(phone);
-        phoneInFlight = phone;
+        phoneInFlight.set(phone);
         location.hash = "#/auth/code";
       } catch (e) { views.toast(e.message, "error"); }
     }));
@@ -64,38 +82,72 @@
 
   function showCode() {
     setLogoutVisible(false);
-    if (!phoneInFlight) { location.hash = "#/"; return; }
+    const phone = phoneInFlight.get();
+    if (!phone) { location.hash = "#/"; return; }
     show(views.code(
-      phoneInFlight,
+      phone,
       async (code) => {
         try {
-          const res = await api.verifyCode(phoneInFlight, code);
+          const res = await api.verifyCode(phone, code);
           api.setToken(res.session_token);
+          phoneInFlight.clear();
           if (res.needs_onboarding) location.hash = "#/onboarding";
           else location.hash = "#/home";
         } catch (e) { views.toast(e.message, "error"); }
       },
       async () => {
-        try { await api.startCode(phoneInFlight); views.toast("New code sent."); }
+        try { await api.startCode(phone); views.toast("New code sent."); }
         catch (e) { views.toast(e.message, "error"); }
       },
     ));
   }
 
-  function showOnboarding() {
+  async function showOnboarding() {
     setLogoutVisible(true);
-    show(views.onboarding(phoneInFlight, async (data) => {
+    // The onboarding form needs the verified phone to send to POST /me/onboard.
+    // Most arrivals come straight from /auth/verify and have it in sessionStorage.
+    // If a user lost it (cleared session storage, switched browsers), fall back
+    // to asking them to sign in again — we deliberately don't expose the phone
+    // anywhere readable from /me, so reverification is the right path.
+    const phone = phoneInFlight.get();
+    if (!phone) {
+      views.toast("Please sign in again to finish setting up your account.", "error");
+      api.clearToken();
+      return showWelcome();
+    }
+    show(views.onboarding(phone, async (data) => {
       try {
-        // If we're refreshing onboarding without a fresh phone in flight, get it from /me lookup
-        if (!data.phone) {
-          views.toast("Phone is missing; please sign in again.", "error");
-          api.clearToken();
-          return showWelcome();
-        }
         await api.onboard(data);
+        phoneInFlight.clear();
         location.hash = "#/season/" + SEASON;
       } catch (e) { views.toast(e.message, "error"); }
     }));
+  }
+
+  // ───────── Settings ─────────
+  async function showSettings(me) {
+    show(views.settings(
+      me,
+      async (data) => {
+        try {
+          await api.updateMe(data);
+          views.toast("Saved.");
+          location.hash = "#/home";
+        } catch (e) { views.toast(e.message, "error"); }
+      },
+      async () => {
+        try {
+          await api.deleteMe();
+        } catch (e) {
+          // Even if the call fails, log out locally — the user wants out.
+          console.error(e);
+        }
+        api.clearToken();
+        phoneInFlight.clear();
+        views.toast("Your account has been deleted.");
+        location.hash = "#/";
+      },
+    ));
   }
 
   // ───────── Home ─────────
@@ -137,17 +189,45 @@
   // ───────── Plan ─────────
   async function showLatestPlan(me, seasonId) {
     show(views.loading("Loading your plan…"));
-    let p;
-    try { p = await api.latestPlan(seasonId); }
-    catch (e) {
+    let p, list;
+    try {
+      [p, list] = await Promise.all([
+        api.latestPlan(seasonId),
+        api.listPlans(seasonId),
+      ]);
+    } catch (e) {
       if (e.status === 404) { location.hash = "#/season/" + seasonId; return; }
       throw e;
     }
+    renderPlan(me, seasonId, p, list.versions.length);
+  }
+
+  async function showPlanVersion(me, seasonId, version) {
+    show(views.loading(`Loading plan v${version}…`));
+    let p, list;
+    try {
+      [p, list] = await Promise.all([
+        api.getPlan(seasonId, version),
+        api.listPlans(seasonId),
+      ]);
+    } catch (e) {
+      if (e.status === 404) {
+        views.toast(`No plan v${version} found.`, "error");
+        location.hash = "#/plans";
+        return;
+      }
+      throw e;
+    }
+    renderPlan(me, seasonId, p, list.versions.length);
+  }
+
+  function renderPlan(me, seasonId, p, totalVersions) {
     show(views.plan(
       me,
       p.markdown,
       (p.meta && p.meta.sources) || [],
       p.version,
+      totalVersions,
       async () => {
         show(views.generating(me));
         try {
@@ -157,6 +237,24 @@
         } catch (e) { show(views.error(e.message)); }
       },
       () => { location.hash = "#/season/" + seasonId; },
+    ));
+  }
+
+  async function showPlanHistory(me, seasonId) {
+    show(views.loading("Loading your plans…"));
+    const list = await api.listPlans(seasonId);
+    if (!list.versions.length) {
+      location.hash = "#/season/" + seasonId;
+      return;
+    }
+    const fmt = (ts) => {
+      if (!ts) return "—";
+      const d = new Date(ts * 1000);
+      return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) +
+        " · " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    };
+    show(views.planHistory(
+      list.versions.map(v => ({ version: v.version, date: fmt(v.generated_at) }))
     ));
   }
 

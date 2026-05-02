@@ -130,6 +130,62 @@ def test_incomplete_questionnaire_rejected(setup) -> None:
     assert "incomplete" in str(exc_info.value).lower()
 
 
+def test_plans_index_endpoint_returns_enriched_versions(setup, tmp_path) -> None:
+    """The /seasons/{id}/plans endpoint should return version + generated_at +
+    model_plan for each version, not just the bare version numbers."""
+    settings, store, profile = setup
+    from fastapi.testclient import TestClient
+
+    from pathwise.api import deps
+    from pathwise.api.app import create_app
+    from pathwise.core.auth import AuthService
+    from pathwise.core.profile import ProfileService
+    from pathwise.sms.console_sender import ConsoleSmsSender
+
+    sender = ConsoleSmsSender()
+    auth = AuthService(store, settings, sender)
+
+    # Generate two plan versions
+    for _ in range(2):
+        with patch("pathwise.core.plan.call_plain") as mock_call:
+            mock_call.return_value = LlmCallResult(
+                text="# plan\n", sources=[], usage={}
+            )
+            generate_plan(
+                user_id=profile.user_id,
+                season_id="transition-to-adulthood",
+                store=store,
+                settings=settings,
+                skip_research=True,
+            )
+
+    app = create_app()
+    app.dependency_overrides[deps.get_settings] = lambda: settings
+    app.dependency_overrides[deps.get_store] = lambda: store
+    app.dependency_overrides[deps.get_auth_service] = lambda: auth
+    app.dependency_overrides[deps.get_profile_service] = lambda: ProfileService(store)
+    client = TestClient(app)
+
+    # Sign in as the profile holder
+    client.post("/auth/start", json={"phone": PHONE})
+    code = sender.sent[-1][1].split("code is ")[1].split(".")[0]
+    token = client.post("/auth/verify", json={"phone": PHONE, "code": code}).json()[
+        "session_token"
+    ]
+
+    r = client.get(
+        "/seasons/transition-to-adulthood/plans",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 200
+    versions = r.json()["versions"]
+    assert len(versions) == 2
+    assert versions[0]["version"] == 1
+    assert versions[1]["version"] == 2
+    assert versions[0]["generated_at"]  # populated
+    assert versions[0]["model_plan"] == "claude-opus-4-7"
+
+
 def test_plan_prompt_renders_with_full_context(setup) -> None:
     """Smoke test: the plan template renders without missing-context errors."""
     settings, store, profile = setup

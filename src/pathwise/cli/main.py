@@ -142,6 +142,35 @@ def auth_send_code(
     typer.echo(f"Code sent to {phone_e164}")
 
 
+@auth_app.command("test-sms")
+def auth_test_sms(
+    phone: Annotated[str, typer.Option(help="Phone, any reasonable format")],
+    body: Annotated[
+        str, typer.Option(help="Custom body")
+    ] = "Pathwise test message — if you got this, SMS is working.",
+) -> None:
+    """Send a one-off SMS via the configured sender (Twilio if creds set,
+    console otherwise). Doesn't touch OTP state — purely for verifying the
+    SMS path end-to-end after pasting Twilio credentials."""
+    settings = get_settings()
+    sender = build_sms_sender(settings)
+    phone_e164 = normalize_phone(phone)
+    backend = sender.__class__.__name__
+    typer.echo(f"Sending via {backend} → {phone_e164} …")
+    try:
+        sender.send(phone_e164, body)
+    except Exception as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    if backend == "ConsoleSmsSender":
+        typer.echo(
+            "Done — message printed to the server log "
+            "(no Twilio creds configured; set TWILIO_* env vars to send for real)."
+        )
+    else:
+        typer.echo("Done — Twilio accepted the message. Check your phone.")
+
+
 @auth_app.command("verify")
 def auth_verify(
     phone: Annotated[str, typer.Option(help="Phone, any reasonable format")],

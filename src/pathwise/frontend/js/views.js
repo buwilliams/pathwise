@@ -323,7 +323,7 @@ const views = (() => {
   }
 
   // ───────── Plan ─────────
-  function plan(profile, planText, sources, version, onRegenerate, onRevise) {
+  function plan(profile, planText, sources, version, totalVersions, onRegenerate, onRevise) {
     const html = md.render(planText);
     return el("div", {},
       el("div", { class: "plan-content", html }),
@@ -335,7 +335,116 @@ const views = (() => {
         el("button", { class: "btn btn-secondary", onclick: onRevise }, "Revise my answers"),
         el("button", { class: "btn", onclick: onRegenerate }, "Generate a new version"),
       ),
-      el("p", { class: "progress-label" }, `Plan v${version}`),
+      el("p", { class: "progress-label" },
+        `Plan v${version}` + (totalVersions > 1 ? ` of ${totalVersions} — ` : ""),
+        totalVersions > 1 ? el("a", { href: "#/plans" }, "view all versions") : null,
+      ),
+    );
+  }
+
+  // ───────── Settings (edit profile + delete account) ─────────
+  function settings(profile, onSave, onDelete) {
+    const data = {
+      first_name: profile.first_name,
+      gender: profile.gender,
+      zip_code: profile.zip_code || "",
+    };
+    let dirty = false;
+    const save = el("button", { class: "btn", onclick: () => onSave(data) }, "Save changes");
+    save.disabled = true;
+    const markDirty = () => { dirty = true; save.disabled = false; };
+
+    const genderRadio = (value, label) =>
+      el("label", { class: "choice-item" + (data.gender === value ? " selected" : "") },
+        el("input", {
+          type: "radio", name: "gender", value, checked: data.gender === value,
+          onchange: (e) => {
+            data.gender = value;
+            e.target.closest(".choice-list").querySelectorAll(".choice-item")
+              .forEach(c => c.classList.remove("selected"));
+            e.target.closest(".choice-item").classList.add("selected");
+            markDirty();
+          },
+        }),
+        el("span", { class: "label" }, label),
+      );
+
+    // Two-step delete confirmation lives inside the danger-zone card.
+    let deleteArmed = false;
+    const deleteBtn = el("button", { class: "btn btn-danger", onclick: () => {
+      if (!deleteArmed) {
+        deleteArmed = true;
+        deleteBtn.textContent = "Tap again to confirm — this can't be undone";
+        setTimeout(() => {
+          if (deleteArmed) {
+            deleteArmed = false;
+            deleteBtn.textContent = "Delete my account";
+          }
+        }, 5000);
+        return;
+      }
+      onDelete();
+    }}, "Delete my account");
+
+    return el("div", {},
+      card(
+        el("h2", {}, "Settings"),
+        el("p", { class: "lede" }, "You can change these whenever. They're only used to make your plan feel like yours."),
+        el("div", { class: "field" },
+          el("label", { for: "name" }, "First name"),
+          el("input", {
+            id: "name", type: "text", value: data.first_name,
+            oninput: (e) => { data.first_name = e.target.value; markDirty(); },
+          }),
+        ),
+        el("div", { class: "field" },
+          el("label", {}, "Gender"),
+          el("div", { class: "choice-list" },
+            genderRadio("female", "Female"),
+            genderRadio("male", "Male"),
+            genderRadio("non-binary", "Non-binary"),
+          ),
+        ),
+        el("div", { class: "field" },
+          el("label", { for: "zip" }, "ZIP code"),
+          el("p", { class: "help" }, "Helps us look up real prices and programs near you."),
+          el("input", {
+            id: "zip", type: "text", inputmode: "numeric", maxlength: "5",
+            value: data.zip_code,
+            oninput: (e) => {
+              data.zip_code = e.target.value.replace(/\D/g, "").slice(0, 5);
+              e.target.value = data.zip_code;
+              markDirty();
+            },
+          }),
+        ),
+        el("div", { class: "btn-row" }, save),
+      ),
+      el("div", { class: "danger-zone" },
+        el("h3", {}, "Danger zone"),
+        el("p", {}, "This deletes your profile, all your answers, and every plan version. There's no recovery."),
+        deleteBtn,
+      ),
+    );
+  }
+
+  // ───────── Plan history (versions list) ─────────
+  function planHistory(versions) {
+    return card(
+      el("h2", {}, "Your plans"),
+      el("p", { class: "lede" },
+        versions.length === 1
+          ? "One plan so far. As you revise your answers and regenerate, every version stays here so you can see how your thinking has shifted."
+          : "Every version of your plan, newest first. Revising your answers and generating again creates a new version — your previous ones stay put."
+      ),
+      el("div", { class: "plan-list" },
+        ...[...versions].reverse().map(v =>
+          el("a", { href: `#/plan/${v.version}` },
+            el("span", { class: "plan-version" }, `Plan v${v.version}`),
+            el("span", { class: "plan-date" }, v.date),
+          ),
+        ),
+      ),
     );
   }
 
@@ -367,7 +476,7 @@ const views = (() => {
   return {
     el, card, toast,
     welcome, code, onboarding, home,
-    questionnaire, plan,
+    questionnaire, plan, planHistory, settings,
     loading, generating, error,
   };
 })();

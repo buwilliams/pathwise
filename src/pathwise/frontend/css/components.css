@@ -50,8 +50,13 @@
   padding: var(--space-2) var(--space-3);
   min-height: var(--tap);
   font-size: 0.95rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 .text-btn:hover { color: var(--ink); }
+
+.header-nav { display: flex; align-items: center; gap: var(--space-1); }
 
 .btn-row { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
 
@@ -243,3 +248,37 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .hidden { display: none !important; }
+
+/* ───────── Danger zone (settings) ───────── */
+.danger-zone {
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+  border: 1.5px dashed #D9B5AD;
+  border-radius: var(--radius);
+  background: #FBF1EE;
+}
+.danger-zone h3 { color: var(--warn); margin-bottom: var(--space-2); }
+.danger-zone p { color: var(--ink-soft); margin-bottom: var(--space-4); }
+.btn-danger {
+  background: var(--warn);
+  color: var(--cream);
+}
+.btn-danger:hover { background: #9C3B22; color: var(--cream); }
+
+/* ───────── Plan history list ───────── */
+.plan-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.plan-list a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: var(--tap);
+  padding: var(--space-3) var(--space-4);
+  background: var(--paper);
+  border: 1.5px solid var(--cream-soft);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--ink);
+}
+.plan-list a:hover { border-color: var(--terracotta); color: var(--ink); }
+.plan-list .plan-version { font-weight: 500; }
+.plan-list .plan-date { color: var(--ink-mute); font-size: 0.9rem; }

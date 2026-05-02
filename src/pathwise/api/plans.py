@@ -31,7 +31,17 @@ def create(season_id: str, store: StoreDep, user_id: CurrentUserId) -> dict[str,
 @router.get("")
 def index(season_id: str, store: StoreDep, user_id: CurrentUserId) -> dict[str, Any]:
     versions = list_plans(user_id, season_id, store)
-    return {"versions": versions}
+    enriched = []
+    for v in versions:
+        meta = store.read_json(store.plan_meta_path(user_id, season_id, v))
+        enriched.append(
+            {
+                "version": v,
+                "generated_at": meta.get("generated_at"),
+                "model_plan": meta.get("model_plan"),
+            }
+        )
+    return {"versions": enriched}
 
 
 @router.get("/latest")

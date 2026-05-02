@@ -3,10 +3,12 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel, Field
 
-from pathwise.api.deps import CurrentUserId, ProfileServiceDep, StoreDep
+from pathwise.api.deps import AuthServiceDep, CurrentUserId, ProfileServiceDep
 from pathwise.core.ids import user_id_for_phone, normalize_phone
 
 router = APIRouter(prefix="/me", tags=["profile"])
@@ -90,3 +92,20 @@ def update(
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return ProfileResponse(**asdict(profile))
+
+
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
+def delete(
+    profiles: ProfileServiceDep,
+    auth: AuthServiceDep,
+    user_id: CurrentUserId,
+    authorization: Annotated[str | None, Header()] = None,
+) -> None:
+    """Permanently delete the current user's profile, answers, plans, events.
+
+    Also revokes the bearer token used to make this request.
+    """
+    profiles.delete(user_id)
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[len("bearer ") :].strip()
+        auth.revoke_session(token)

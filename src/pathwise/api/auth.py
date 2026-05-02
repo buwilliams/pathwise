@@ -3,6 +3,10 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
+from typing import Annotated
+
+from fastapi import Header
+
 from pathwise.api.deps import AuthServiceDep
 from pathwise.core.auth import (
     CodeExpiredError,
@@ -71,3 +75,14 @@ def verify(req: VerifyCodeRequest, auth: AuthServiceDep) -> VerifyCodeResponse:
         session_token=result.session_token,
         needs_onboarding=result.needs_onboarding,
     )
+
+
+@router.post("/revoke", status_code=status.HTTP_204_NO_CONTENT)
+def revoke(
+    auth: AuthServiceDep,
+    authorization: Annotated[str | None, Header()] = None,
+) -> None:
+    """Invalidate the current session token. Idempotent — unknown tokens 204."""
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[len("bearer ") :].strip()
+        auth.revoke_session(token)

@@ -87,3 +87,58 @@ def test_bad_token_rejected(client) -> None:
     api, _ = client
     r = api.get("/me", headers={"Authorization": "Bearer nonsense"})
     assert r.status_code == 401
+
+
+def _signed_in_token(api, sender) -> str:
+    api.post("/auth/start", json={"phone": PHONE})
+    code = _last_code(sender)
+    return api.post("/auth/verify", json={"phone": PHONE, "code": code}).json()[
+        "session_token"
+    ]
+
+
+def test_revoke_invalidates_session(client) -> None:
+    api, sender = client
+    token = _signed_in_token(api, sender)
+    auth_h = {"Authorization": f"Bearer {token}"}
+    assert api.get("/me", headers=auth_h).status_code in (200, 404)
+
+    r = api.post("/auth/revoke", headers=auth_h)
+    assert r.status_code == 204
+
+    # Token no longer works
+    assert api.get("/me", headers=auth_h).status_code == 401
+
+
+def test_revoke_no_token_is_idempotent(client) -> None:
+    api, _ = client
+    r = api.post("/auth/revoke")
+    assert r.status_code == 204
+
+
+def test_delete_me_removes_profile_and_revokes_session(client) -> None:
+    api, sender = client
+    token = _signed_in_token(api, sender)
+    auth_h = {"Authorization": f"Bearer {token}"}
+    api.post(
+        "/me/onboard",
+        json={"phone": PHONE, "first_name": "Emma", "gender": "female"},
+        headers=auth_h,
+    )
+    assert api.get("/me", headers=auth_h).status_code == 200
+
+    r = api.delete("/me", headers=auth_h)
+    assert r.status_code == 204
+
+    # Token revoked → 401
+    assert api.get("/me", headers=auth_h).status_code == 401
+
+    # Sign in again — profile is gone, so onboarding is required
+    new_token = _signed_in_token(api, sender)
+    me = api.get("/me", headers={"Authorization": f"Bearer {new_token}"})
+    assert me.status_code == 404
+
+
+def test_delete_me_requires_auth(client) -> None:
+    api, _ = client
+    assert api.delete("/me").status_code == 401
