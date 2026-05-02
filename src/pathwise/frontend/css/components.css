@@ -61,6 +61,11 @@
   display: flex;
   align-items: center;
 }
+/* Same gotcha as .menu-panel below: the class rule's display:flex beats the
+   user-agent [hidden] {display:none}, so we re-assert it here. Without this,
+   the hamburger menu shows up on the login screen even though setLogoutVisible
+   (false) sets hidden=true. */
+.header-nav[hidden] { display: none; }
 
 /* ── Hamburger toggle ── */
 .menu-toggle {
@@ -109,6 +114,10 @@
   overflow: hidden;
   z-index: 50;
 }
+/* The class rule above overrides the user-agent [hidden] {display:none}
+   because it's more specific. Re-assert hidden here so the panel actually
+   collapses when toggled. */
+.menu-panel[hidden] { display: none; }
 .menu-item {
   display: block;
   padding: var(--space-3) var(--space-4);
@@ -239,10 +248,11 @@
   padding: var(--space-5);
   font-size: 1.02rem;
 }
-.plan-content h1, .plan-content h2, .plan-content h3 {
+.plan-content h1, .plan-content h2, .plan-content h3, .plan-content h4 {
   margin-top: var(--space-5);
   margin-bottom: var(--space-3);
 }
+.plan-content h4 { font-size: 1.05rem; color: var(--ink-soft); }
 .plan-content h1:first-child, .plan-content h2:first-child { margin-top: 0; }
 .plan-content p { margin-bottom: var(--space-4); }
 .plan-content ul, .plan-content ol { margin-bottom: var(--space-4); }
@@ -255,6 +265,45 @@
   color: var(--ink-soft);
   font-style: italic;
 }
+
+/* GitHub-style tables inside rendered markdown */
+.plan-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-4) 0;
+  font-size: 0.95rem;
+  display: block;
+  overflow-x: auto;
+}
+.plan-content thead { background: var(--cream-soft); }
+.plan-content th, .plan-content td {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--cream-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.plan-content th { font-weight: 600; }
+.plan-content tbody tr:nth-child(even) { background: rgba(232, 152, 92, 0.04); }
+
+/* Fenced code blocks */
+.plan-content pre {
+  background: var(--cream-soft);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  overflow-x: auto;
+  font-size: 0.85rem;
+  margin: var(--space-4) 0;
+}
+.plan-content pre code { background: transparent; padding: 0; }
+.plan-content code {
+  background: var(--cream-soft);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* KaTeX display blocks need a little vertical breathing room */
+.plan-content .katex-display { margin: var(--space-4) 0; overflow-x: auto; }
 
 .sources {
   margin-top: var(--space-5);
@@ -361,6 +410,17 @@
 .season-row-name { font-weight: 500; }
 .season-row-age { font-size: 0.8rem; color: var(--ink-mute); }
 .season-row-meta { font-size: 0.85rem; color: var(--ink-mute); margin: 0; }
+.season-row-busy {
+  border-color: var(--terracotta-soft);
+  background: #FCF5EE;
+  cursor: default;
+}
+.season-row-busy:hover { border-color: var(--terracotta-soft); }
+.season-row-error {
+  font-size: 0.85rem;
+  color: var(--warn);
+  margin: var(--space-2) 0 0 0;
+}
 
 .plan-row {
   display: flex;

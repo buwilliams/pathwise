@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
 </head>
 <body>
   <header class="app-header">
@@ -22,6 +23,7 @@
         <span class="menu-icon" aria-hidden="true"></span>
       </button>
       <div class="menu-panel" id="menu-panel" hidden role="menu">
+        <a href="#/" class="menu-item" role="menuitem">Home</a>
         <a href="#/docs" class="menu-item" role="menuitem">Technical details</a>
         <a href="#/settings" class="menu-item" role="menuitem">Settings</a>
         <button id="logout-btn" class="menu-item" role="menuitem">Sign out</button>
@@ -30,6 +32,7 @@
   </header>
   <main id="view" class="view"></main>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
   <script src="/js/api.js"></script>
   <script src="/js/markdown.js"></script>
   <script src="/js/views.js"></script>

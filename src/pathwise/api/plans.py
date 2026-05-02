@@ -2,30 +2,46 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 
 from pathwise.api.deps import CurrentUserId, StoreDep
 from pathwise.core.plan import (
     PlanError,
-    generate_plan,
+    PlanJobAlreadyRunning,
     list_plans,
+    plan_job_status,
     read_plan,
+    start_plan_job,
 )
 
 router = APIRouter(prefix="/seasons/{season_id}/plans", tags=["plans"])
 
 
-@router.post("")
-def create(season_id: str, store: StoreDep, user_id: CurrentUserId) -> dict[str, Any]:
+@router.post("", status_code=status.HTTP_202_ACCEPTED)
+def create(
+    season_id: str, store: StoreDep, user_id: CurrentUserId
+) -> dict[str, Any]:
+    """Kick off plan generation in the background. Returns immediately with
+    the job's start time. Poll GET /status to track progress.
+    """
     try:
-        result = generate_plan(user_id=user_id, season_id=season_id, store=store)
+        return start_plan_job(
+            user_id=user_id, season_id=season_id, store=store
+        )
+    except PlanJobAlreadyRunning as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except PlanError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {
-        "version": result.version,
-        "markdown": result.markdown,
-        "sources": result.sources,
-    }
+
+
+@router.get("/status")
+def status_endpoint(
+    season_id: str, store: StoreDep, user_id: CurrentUserId
+) -> dict[str, Any]:
+    """Polling endpoint. Returns whether a plan job is in flight and (when
+    not generating) the latest plan version + the most recent failure error.
+    """
+    return plan_job_status(user_id, season_id, store)
 
 
 @router.get("")

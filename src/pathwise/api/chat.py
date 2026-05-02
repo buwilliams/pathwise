@@ -6,9 +6,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from fastapi import status
+
 from pathwise.api.deps import CurrentUserId, StoreDep
 from pathwise.core.chat import ChatError, ChatService, render_chat_for_prompt
-from pathwise.core.plan import PlanError, generate_plan
+from pathwise.core.plan import PlanError, PlanJobAlreadyRunning, start_plan_job
 from pathwise.core.profile import ProfileService
 
 router = APIRouter(
@@ -51,17 +53,17 @@ def send(
     return {"assistant": asdict(assistant)}
 
 
-@router.post("/regenerate")
+@router.post("/regenerate", status_code=status.HTTP_202_ACCEPTED)
 def regenerate(
     season_id: str,
     version: int,
     store: StoreDep,
     user_id: CurrentUserId,
 ) -> dict[str, Any]:
-    """Generate a new plan version that folds in the conversation about plan v.
-
-    The chat history attached to plan v becomes the seed for plan v+1. Old plan
-    + chat stay in history; the user lands on the new plan.
+    """Kick off a regeneration job in the background. The chat history
+    attached to plan v becomes the seed for the new plan version. Returns
+    immediately with the job's start time; poll the plan status endpoint
+    to track progress.
     """
     profile = ProfileService(store).get(user_id)
     if profile is None:
@@ -77,16 +79,13 @@ def regenerate(
 
     chat_context = render_chat_for_prompt(turns, profile.first_name)
     try:
-        new_plan = generate_plan(
+        return start_plan_job(
             user_id=user_id,
             season_id=season_id,
             store=store,
             chat_context=chat_context,
         )
+    except PlanJobAlreadyRunning as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except PlanError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {
-        "version": new_plan.version,
-        "markdown": new_plan.markdown,
-        "sources": new_plan.sources,
-    }

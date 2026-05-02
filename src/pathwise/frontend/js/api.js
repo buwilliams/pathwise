@@ -54,6 +54,7 @@ const api = (() => {
     getAnswers: (seasonId)     => request("GET", `/seasons/${seasonId}/answers`),
     putAnswers: (seasonId, a)  => request("PUT", `/seasons/${seasonId}/answers`, { answers: a }),
     generatePlan: (seasonId)   => request("POST", `/seasons/${seasonId}/plans`),
+    planStatus: (seasonId)     => request("GET", `/seasons/${seasonId}/plans/status`),
     listPlans: (seasonId)      => request("GET", `/seasons/${seasonId}/plans`),
     getPlan: (seasonId, v)     => request("GET", `/seasons/${seasonId}/plans/${v}`),
     latestPlan: (seasonId)     => request("GET", `/seasons/${seasonId}/plans/latest`),

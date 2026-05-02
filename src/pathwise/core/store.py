@@ -140,6 +140,18 @@ class FileStore:
     def chat_history_path(self, user_id: str, season_id: str, version: int) -> Path:
         return self.plans_dir(user_id, season_id) / f"plan_v{version}.chat.jsonl"
 
+    def plan_job_lock_path(self, user_id: str, season_id: str) -> Path:
+        """Lock file written when a plan-generation job is in flight.
+
+        Removed on completion (success or failure). Stale locks (older than
+        STALE_LOCK_AGE_SECONDS) are treated as crashed jobs and cleaned up.
+        """
+        return self.season_dir(user_id, season_id) / ".plan_job.json"
+
+    def plan_jobs_log_path(self, user_id: str, season_id: str) -> Path:
+        """Append-only log of plan-generation job outcomes (success + failure)."""
+        return self.season_dir(user_id, season_id) / "plan_jobs.jsonl"
+
     def list_plan_versions(self, user_id: str, season_id: str) -> list[int]:
         d = self.plans_dir(user_id, season_id)
         if not d.exists():

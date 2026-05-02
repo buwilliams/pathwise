@@ -112,7 +112,7 @@ const views = (() => {
         el("label", { for: "name" }, "First name"),
         el("input", {
           id: "name", type: "text", autocomplete: "given-name",
-          placeholder: "Emma",
+          placeholder: "Your name",
           oninput: (e) => { data.first_name = e.target.value; refresh(); },
         }),
       ),
@@ -144,25 +144,57 @@ const views = (() => {
     const fmtDate = (ts) => ts
       ? new Date(ts * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
       : "—";
+    const fmtElapsed = (startedAt) => {
+      if (!startedAt) return "";
+      const seconds = Math.max(1, Math.floor(Date.now() / 1000 - startedAt));
+      if (seconds < 60) return `${seconds}s ago`;
+      return `${Math.floor(seconds / 60)}m ago`;
+    };
+
+    function seasonCard(s) {
+      // Mid-flight: link goes nowhere, show spinner + elapsed + last error if any
+      if (s.generating) {
+        const card = el("div", { class: "season-row season-row-busy" },
+          el("div", { class: "season-row-head" },
+            el("span", { class: "season-row-name" }, s.name),
+            el("span", { class: "season-row-age" }, formatAge(s)),
+          ),
+          el("p", { class: "season-row-meta" },
+            el("span", { class: "spinner" }),
+            (s.from_chat ? "Updating from your conversation… " : "Building your plan… ") +
+            `(started ${fmtElapsed(s.started_at)}, usually 2–4 min)`,
+          ),
+        );
+        return card;
+      }
+
+      const linkTarget = s.latest_version
+        ? `#/season/${s.season_id}/plan`
+        : `#/season/${s.season_id}`;
+      const meta = s.latest_version
+        ? `${s.plan_count} plan${s.plan_count === 1 ? "" : "s"} · last updated ${fmtDate(s.latest_at)}` +
+          (s.chat_count ? ` · ${s.chat_count} conversation${s.chat_count === 1 ? "" : "s"}` : "")
+        : "No plan yet — finish answering to generate one";
+
+      const node = el("a", { class: "season-row", href: linkTarget },
+        el("div", { class: "season-row-head" },
+          el("span", { class: "season-row-name" }, s.name),
+          el("span", { class: "season-row-age" }, formatAge(s)),
+        ),
+        el("p", { class: "season-row-meta" }, meta),
+      );
+      if (s.last_error) {
+        node.appendChild(el("p", { class: "season-row-error" },
+          `Last attempt failed: ${s.last_error}`,
+        ));
+      }
+      return node;
+    }
 
     const inProgress = mySeasons.length
       ? card(
           el("h2", {}, "Your seasons"),
-          el("div", { class: "season-list" },
-            ...mySeasons.map(s => el("a", {
-              class: "season-row",
-              href: `#/season/${s.season_id}/plan`,
-            },
-              el("div", { class: "season-row-head" },
-                el("span", { class: "season-row-name" }, s.name),
-                el("span", { class: "season-row-age" }, formatAge(s)),
-              ),
-              el("p", { class: "season-row-meta" },
-                `${s.plan_count} plan${s.plan_count === 1 ? "" : "s"} · last updated ${fmtDate(s.latest_at)}` +
-                (s.chat_count ? ` · ${s.chat_count} conversation${s.chat_count === 1 ? "" : "s"}` : ""),
-              ),
-            )),
-          ),
+          el("div", { class: "season-list" }, ...mySeasons.map(seasonCard)),
         )
       : null;
 
@@ -730,14 +762,6 @@ const views = (() => {
     );
   }
 
-  function generating(profile) {
-    return card(
-      el("h2", {}, "Thinking it through…"),
-      el("p", { class: "lede" }, "Looking up real prices and programs near you, then writing you something honest. This usually takes 2–4 minutes."),
-      el("p", {}, el("span", { class: "spinner" }), "Working…"),
-    );
-  }
-
   function error(message) {
     return card(
       el("h2", {}, "Something went wrong."),
@@ -753,6 +777,6 @@ const views = (() => {
     welcome, code, onboarding, home, seasons, history,
     questionnaire, plan, chat, planHistory, settings,
     docsIndex, docPage,
-    loading, generating, error,
+    loading, error,
   };
 })();

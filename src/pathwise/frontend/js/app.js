@@ -77,7 +77,19 @@
       try {
         me = await api.me();
       } catch (e) {
-        if (e.status === 404) return showOnboarding();
+        if (e.status === 404) {
+          // No profile yet (mid-onboarding). Allow routes that don't need
+          // a profile to render normally; nudge everything else back to the
+          // onboarding form so the menu doesn't look broken.
+          setLogoutVisible(true);
+          if (route === "docs") return showDocs();
+          const docMatch = route.match(/^docs\/(.+)$/);
+          if (docMatch) return showDocPage(docMatch[1]);
+          if (route && route !== "onboarding") {
+            views.toast("Finish setting up your account first.");
+          }
+          return showOnboarding();
+        }
         if (e.status === 401) return showWelcome();
         throw e;
       }
@@ -205,11 +217,57 @@
   }
 
   // ───────── Home / seasons / history ─────────
+  // Poll handle for the home page's auto-refresh while plans are generating.
+  // Cleared on every hashchange so we don't keep polling after navigating away.
+  let homePollHandle = null;
+  let homePrevGenerating = new Set();
+  function clearHomePoll() {
+    if (homePollHandle) clearInterval(homePollHandle);
+    homePollHandle = null;
+    homePrevGenerating = new Set();
+  }
+  window.addEventListener("hashchange", clearHomePoll);
+
   async function showHome(me) {
+    clearHomePoll();
     show(views.loading());
     let mine = [];
     try { mine = (await api.mySeasons()).seasons; } catch (e) {}
-    show(views.home(me, mine));
+    homePrevGenerating = new Set(
+      mine.filter(s => s.generating).map(s => s.season_id),
+    );
+
+    function render() {
+      show(views.home(me, mine));
+      if (mine.some(s => s.generating)) {
+        if (!homePollHandle) homePollHandle = setInterval(refresh, 5000);
+      } else {
+        if (homePollHandle) { clearInterval(homePollHandle); homePollHandle = null; }
+      }
+    }
+
+    async function refresh() {
+      let fresh;
+      try { fresh = (await api.mySeasons()).seasons; }
+      catch (_) { return; }  // network blip — try again next tick
+      // Detect generating → done transitions and surface a toast.
+      for (const s of fresh) {
+        if (homePrevGenerating.has(s.season_id) && !s.generating) {
+          if (s.last_error) {
+            views.toast(`Plan generation failed: ${s.last_error}`, "error");
+          } else if (s.latest_version) {
+            views.toast(`Your ${s.name} plan v${s.latest_version} is ready.`);
+          }
+        }
+      }
+      mine = fresh;
+      homePrevGenerating = new Set(
+        mine.filter(s => s.generating).map(s => s.season_id),
+      );
+      render();
+    }
+
+    render();
   }
 
   async function showSeasons(me) {
@@ -265,12 +323,17 @@
         return r;
       },
       async () => {
-        show(views.generating(me));
         try {
           await api.generatePlan(seasonId);
-          location.hash = `#/season/${seasonId}/plan`;
+          views.toast("Building your plan — usually 2–4 minutes. We'll show it on your home page when it's ready.");
+          location.hash = "#/";
         } catch (e) {
-          show(views.error(e.message));
+          if (e.status === 409) {
+            views.toast("A plan is already being generated for this season.", "error");
+            location.hash = "#/";
+          } else {
+            show(views.error(e.message));
+          }
         }
       },
     );
@@ -321,12 +384,18 @@
       p.version,
       totalVersions,
       async () => {
-        show(views.generating(me));
         try {
           await api.generatePlan(seasonId);
-          location.hash = `#/season/${seasonId}/plan`;
-          go();
-        } catch (e) { show(views.error(e.message)); }
+          views.toast("Generating a new version — we'll show it on your home page when it's ready.");
+          location.hash = "#/";
+        } catch (e) {
+          if (e.status === 409) {
+            views.toast("A plan is already being generated for this season.", "error");
+            location.hash = "#/";
+          } else {
+            show(views.error(e.message));
+          }
+        }
       },
       () => { location.hash = "#/season/" + seasonId; },
     ));
@@ -348,12 +417,18 @@
       me, seasonId, version, history.turns, planRes.markdown,
       async (text) => api.sendChat(seasonId, version, text),
       async () => {
-        show(views.generating(me));
         try {
-          const newPlan = await api.regenerateFromChat(seasonId, version);
-          location.hash = `#/season/${seasonId}/plan/${newPlan.version}`;
-          go();
-        } catch (e) { show(views.error(e.message)); }
+          await api.regenerateFromChat(seasonId, version);
+          views.toast("Updating your plan from this conversation — we'll show it on your home page when it's ready.");
+          location.hash = "#/";
+        } catch (e) {
+          if (e.status === 409) {
+            views.toast("A plan is already being generated for this season.", "error");
+            location.hash = "#/";
+          } else {
+            show(views.error(e.message));
+          }
+        }
       },
     ));
   }

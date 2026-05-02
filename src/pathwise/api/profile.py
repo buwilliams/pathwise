@@ -100,19 +100,27 @@ def my_seasons(
     profiles: ProfileServiceDep,
 ) -> dict[str, Any]:
     """Seasons this user has touched: plan counts, latest plan timestamp,
-    whether any chat history exists. Drives the home page + history view.
+    whether any chat history exists, and whether a plan job is currently
+    in flight. Drives the home page + history view, and is polled while
+    a job is running so the UI can update without a full refresh.
     """
     from pathwise.api.deps import get_store
+    from pathwise.core.plan import plan_job_status
     from pathwise.core.season import list_packs, packs_root
 
     store = get_store()
     out = []
     for pack in list_packs(packs_root()):
         versions = store.list_plan_versions(user_id, pack.id)
-        if not versions:
+        job = plan_job_status(user_id, pack.id, store)
+        # Surface seasons the user has touched in any way — completed plans
+        # OR a currently-running job OR a recent failure.
+        if not versions and not job["generating"] and not job.get("last_error"):
             continue
-        latest_meta = store.read_json(
-            store.plan_meta_path(user_id, pack.id, versions[-1])
+        latest_meta = (
+            store.read_json(store.plan_meta_path(user_id, pack.id, versions[-1]))
+            if versions
+            else {}
         )
         chat_versions = sum(
             1
@@ -127,9 +135,13 @@ def my_seasons(
                 "age_min": pack.age_min,
                 "age_max": pack.age_max,
                 "plan_count": len(versions),
-                "latest_version": versions[-1],
+                "latest_version": versions[-1] if versions else None,
                 "latest_at": latest_meta.get("generated_at"),
                 "chat_count": chat_versions,
+                "generating": job["generating"],
+                "started_at": job.get("started_at"),
+                "from_chat": job.get("from_chat"),
+                "last_error": job.get("last_error"),
             }
         )
     return {"seasons": out}

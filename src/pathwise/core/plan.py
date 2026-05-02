@@ -12,6 +12,7 @@ Pipeline:
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from dataclasses import asdict, dataclass
 from typing import Any
@@ -30,8 +31,19 @@ from pathwise.llm.templates import render_template
 logger = logging.getLogger(__name__)
 
 
+# A lock file older than this is treated as a crashed job and cleaned up
+# on the next status check. 15 min covers a slow Opus + research pipeline
+# with comfortable headroom.
+STALE_LOCK_AGE_SECONDS = 15 * 60
+
+
 class PlanError(Exception):
     pass
+
+
+class PlanJobAlreadyRunning(PlanError):
+    """Raised when a plan-generation job is requested while one is in flight
+    for the same (user, season). Maps to HTTP 409 in the API layer."""
 
 
 @dataclass
@@ -255,3 +267,197 @@ def read_plan(
     text = store.read_text(store.plan_path(user_id, season_id, version))
     meta = store.read_json(store.plan_meta_path(user_id, season_id, version))
     return text, meta
+
+
+# ---------------------------------------------------------------------------
+# Async plan-generation jobs
+# ---------------------------------------------------------------------------
+
+
+def _record_failure(
+    *,
+    store: FileStore,
+    jobs_log_path: Any,
+    started: float,
+    error: str,
+    chat_context: bool = False,
+) -> None:
+    store.append_jsonl(
+        jobs_log_path,
+        {
+            "started_at": started,
+            "finished_at": time.time(),
+            "status": "failed",
+            "error": error,
+            "from_chat": chat_context,
+        },
+    )
+
+
+def _clear_stale_lock(
+    *,
+    store: FileStore,
+    lock_path: Any,
+    jobs_log_path: Any,
+    existing: dict[str, Any],
+) -> None:
+    """A lock file older than the threshold means the server probably died
+    mid-job. Record the failure and clean up so a fresh job can start."""
+    _record_failure(
+        store=store,
+        jobs_log_path=jobs_log_path,
+        started=existing.get("started_at", time.time()),
+        error="Server appears to have crashed mid-job (lock file is stale).",
+        chat_context=bool(existing.get("from_chat")),
+    )
+    lock_path.unlink(missing_ok=True)
+
+
+def _run_plan_job(
+    *,
+    user_id: str,
+    season_id: str,
+    store: FileStore,
+    settings: Settings,
+    chat_context: str | None,
+    lock_path: Any,
+    jobs_log_path: Any,
+    started: float,
+) -> None:
+    """Worker thread body. Runs synchronously; success removes the lock and
+    appends a success record. Any exception is caught + recorded so the
+    status endpoint can surface it."""
+    try:
+        result = generate_plan(
+            user_id=user_id,
+            season_id=season_id,
+            store=store,
+            settings=settings,
+            chat_context=chat_context,
+        )
+        store.append_jsonl(
+            jobs_log_path,
+            {
+                "started_at": started,
+                "finished_at": time.time(),
+                "status": "succeeded",
+                "version": result.version,
+                "from_chat": chat_context is not None,
+            },
+        )
+    except Exception as exc:
+        logger.exception("plan_job failed user=%s season=%s", user_id, season_id)
+        _record_failure(
+            store=store,
+            jobs_log_path=jobs_log_path,
+            started=started,
+            error=str(exc),
+            chat_context=chat_context is not None,
+        )
+    finally:
+        lock_path.unlink(missing_ok=True)
+
+
+def start_plan_job(
+    *,
+    user_id: str,
+    season_id: str,
+    store: FileStore,
+    settings: Settings | None = None,
+    chat_context: str | None = None,
+) -> dict[str, Any]:
+    """Kick off a plan-generation job in a background thread. Returns
+    immediately with the job's start time. Raises PlanJobAlreadyRunning if
+    a non-stale job is already in flight for this (user, season).
+    """
+    settings = settings or get_settings()
+    lock_path = store.plan_job_lock_path(user_id, season_id)
+    jobs_log_path = store.plan_jobs_log_path(user_id, season_id)
+
+    existing = store.read_json(lock_path)
+    if existing:
+        age = time.time() - existing.get("started_at", 0)
+        if age < STALE_LOCK_AGE_SECONDS:
+            raise PlanJobAlreadyRunning(
+                f"A plan is already being generated for this season "
+                f"(started ~{int(age)}s ago)."
+            )
+        _clear_stale_lock(
+            store=store, lock_path=lock_path,
+            jobs_log_path=jobs_log_path, existing=existing,
+        )
+
+    started = time.time()
+    store.write_json(
+        lock_path,
+        {
+            "started_at": started,
+            "season_id": season_id,
+            "from_chat": chat_context is not None,
+        },
+    )
+
+    threading.Thread(
+        target=_run_plan_job,
+        kwargs={
+            "user_id": user_id,
+            "season_id": season_id,
+            "store": store,
+            "settings": settings,
+            "chat_context": chat_context,
+            "lock_path": lock_path,
+            "jobs_log_path": jobs_log_path,
+            "started": started,
+        },
+        daemon=True,
+        name=f"plan-job-{user_id[:8]}-{season_id}",
+    ).start()
+
+    return {
+        "started_at": started,
+        "season_id": season_id,
+        "from_chat": chat_context is not None,
+    }
+
+
+def plan_job_status(
+    user_id: str, season_id: str, store: FileStore
+) -> dict[str, Any]:
+    """Current state of plan generation for a (user, season).
+
+    Returns either:
+        {generating: True,  started_at, from_chat}
+        {generating: False, latest_version, last_error}
+
+    Stale locks are auto-cleared on read so the next call sees a clean state.
+    """
+    lock_path = store.plan_job_lock_path(user_id, season_id)
+    jobs_log_path = store.plan_jobs_log_path(user_id, season_id)
+
+    existing = store.read_json(lock_path)
+    if existing:
+        age = time.time() - existing.get("started_at", 0)
+        if age < STALE_LOCK_AGE_SECONDS:
+            return {
+                "generating": True,
+                "started_at": existing.get("started_at"),
+                "from_chat": bool(existing.get("from_chat")),
+                "last_error": None,
+            }
+        _clear_stale_lock(
+            store=store, lock_path=lock_path,
+            jobs_log_path=jobs_log_path, existing=existing,
+        )
+
+    versions = store.list_plan_versions(user_id, season_id)
+    history = store.read_jsonl(jobs_log_path)
+    last_error: str | None = None
+    if history:
+        last = history[-1]
+        if last.get("status") == "failed":
+            last_error = last.get("error")
+    return {
+        "generating": False,
+        "latest_version": versions[-1] if versions else None,
+        "last_error": last_error,
+    }
