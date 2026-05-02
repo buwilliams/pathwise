@@ -481,7 +481,7 @@ const views = (() => {
   function generating(profile) {
     return card(
       el("h2", {}, "Thinking it through…"),
-      el("p", { class: "lede" }, "Looking up real prices and programs near you, then writing you something honest. This usually takes about a minute."),
+      el("p", { class: "lede" }, "Looking up real prices and programs near you, then writing you something honest. This usually takes 2–4 minutes."),
       el("p", {}, el("span", { class: "spinner" }), "Working…"),
     );
   }

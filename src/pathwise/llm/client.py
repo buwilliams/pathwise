@@ -17,6 +17,7 @@ effort — Opus 4.7's recommended settings for intelligence-sensitive work.
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
@@ -26,6 +27,15 @@ import anthropic
 from pathwise.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+def _fmt_usage(usage: dict[str, int]) -> str:
+    return (
+        f"in={usage.get('input_tokens', 0)} "
+        f"out={usage.get('output_tokens', 0)} "
+        f"cache_r={usage.get('cache_read_input_tokens', 0)} "
+        f"cache_w={usage.get('cache_creation_input_tokens', 0)}"
+    )
 
 
 @lru_cache(maxsize=1)
@@ -96,7 +106,13 @@ def call_with_research(
     final_text = ""
     usage_totals: dict[str, int] = {}
 
+    started = time.monotonic()
+    logger.info(
+        "llm.research start model=%s max_tokens=%d prompt_chars=%d",
+        model, max_tokens, len(user_prompt),
+    )
     for resume in range(3):
+        logger.info("llm.research streaming (attempt %d)…", resume + 1)
         with client.messages.stream(
             model=model,
             max_tokens=max_tokens,
@@ -130,6 +146,10 @@ def call_with_research(
         if resume == 2:
             logger.warning("web_search loop exceeded resume budget; using partial result")
 
+    logger.info(
+        "llm.research done in %.1fs sources=%d text_chars=%d %s",
+        time.monotonic() - started, len(sources), len(final_text), _fmt_usage(usage_totals),
+    )
     return LlmCallResult(text=final_text, sources=sources, usage=usage_totals)
 
 
@@ -143,6 +163,11 @@ def call_plain(
     """Stream a Claude call with no tools. Used for plan synthesis."""
     client = get_client()
 
+    started = time.monotonic()
+    logger.info(
+        "llm.plain start model=%s max_tokens=%d prompt_chars=%d",
+        model, max_tokens, len(user_prompt),
+    )
     with client.messages.stream(
         model=model,
         max_tokens=max_tokens,
@@ -164,4 +189,8 @@ def call_plain(
             "cache_creation_input_tokens",
         )
     }
+    logger.info(
+        "llm.plain done in %.1fs text_chars=%d %s",
+        time.monotonic() - started, len(text), _fmt_usage(usage),
+    )
     return LlmCallResult(text=text, sources=[], usage=usage)

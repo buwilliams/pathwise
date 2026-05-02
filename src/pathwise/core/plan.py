@@ -87,8 +87,14 @@ def generate_plan(
 
     life = compute_life_state(answers)
 
+    started = time.monotonic()
+    logger.info(
+        "plan.generate start user=%s season=%s plan_model=%s research_model=%s skip_research=%s",
+        user_id, pack.id, settings.pathwise_plan_model,
+        settings.pathwise_research_model, skip_research,
+    )
+
     if research_bundle is None and not skip_research:
-        logger.info("running research for user=%s season=%s", user_id, pack.id)
         research_bundle = run_research(
             pack=pack,
             profile=profile,
@@ -100,9 +106,11 @@ def generate_plan(
         research_path = store.research_dir(user_id, pack.id) / f"{ts}.json"
         store.write_json(research_path, research_bundle.to_json())
     elif research_bundle is None:
+        logger.info("plan.generate skipping research (skip_research=True)")
         research_bundle = ResearchBundle(data={}, sources=[], raw_text="", usage={})
 
     scored = score_all(pack.scenarios, life, pack.weights, research_bundle.data)
+    logger.info("plan.generate scored %d scenarios", len(scored))
 
     plan_prompt = render_template(
         pack.prompt_path("plan"),
@@ -166,6 +174,10 @@ def generate_plan(
             "season_id": pack.id,
             "version": version,
         },
+    )
+    logger.info(
+        "plan.generate done user=%s season=%s v=%d in %.1fs",
+        user_id, pack.id, version, time.monotonic() - started,
     )
 
     return GeneratedPlan(

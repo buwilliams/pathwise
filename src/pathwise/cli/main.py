@@ -53,9 +53,21 @@ def serve(
     host: Annotated[str, typer.Option(help="Bind host")] = "",
     port: Annotated[int, typer.Option(help="Bind port")] = 0,
     reload: Annotated[bool, typer.Option(help="Auto-reload on changes")] = False,
+    log_level: Annotated[str, typer.Option(help="DEBUG | INFO | WARNING | ERROR")] = "INFO",
 ) -> None:
     """Run the Pathwise web server (FastAPI + uvicorn)."""
+    import logging
+
     import uvicorn
+
+    # Route pathwise.* loggers through the root logger so plan/research/auth
+    # messages show up alongside uvicorn's request log. Without this, anything
+    # below WARNING is dropped silently and slow LLM calls look like a hang.
+    logging.basicConfig(
+        level=log_level.upper(),
+        format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
 
     settings = get_settings()
     uvicorn.run(
