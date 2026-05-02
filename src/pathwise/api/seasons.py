@@ -10,19 +10,20 @@ from pathwise.core.season import get_pack, list_packs, packs_root
 router = APIRouter(prefix="/seasons", tags=["seasons"])
 
 
+def _pack_summary(p: Any) -> dict[str, Any]:
+    return {
+        "id": p.id,
+        "name": p.name,
+        "summary": p.summary,
+        "version": p.version,
+        "age_min": p.age_min,
+        "age_max": p.age_max,
+    }
+
+
 @router.get("")
 def list_all() -> list[dict[str, Any]]:
-    out = []
-    for p in list_packs(packs_root()):
-        out.append(
-            {
-                "id": p.id,
-                "name": p.name,
-                "summary": p.summary,
-                "version": p.version,
-            }
-        )
-    return out
+    return [_pack_summary(p) for p in list_packs(packs_root())]
 
 
 @router.get("/{season_id}")
@@ -31,13 +32,7 @@ def show(season_id: str) -> dict[str, Any]:
         p = get_pack(season_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return {
-        "id": p.id,
-        "name": p.name,
-        "summary": p.summary,
-        "version": p.version,
-        "sections": [asdict(s) for s in p.sections],
-    }
+    return {**_pack_summary(p), "sections": [asdict(s) for s in p.sections]}
 
 
 @router.get("/{season_id}/questions")

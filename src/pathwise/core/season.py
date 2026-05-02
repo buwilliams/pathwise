@@ -69,6 +69,8 @@ class SeasonPack:
     weights: dict[str, float]
     scenarios: list[Scenario]
     prompts_dir: Path
+    age_min: int | None = None
+    age_max: int | None = None
 
     def question(self, key: str) -> Question:
         for q in self.questions:
@@ -125,6 +127,8 @@ def load_pack(pack_dir: Path) -> SeasonPack:
         weights=weights,
         scenarios=scenarios,
         prompts_dir=pack_dir / "prompts",
+        age_min=pack_meta.get("age_min"),
+        age_max=pack_meta.get("age_max"),
     )
 
 

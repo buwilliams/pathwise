@@ -18,8 +18,14 @@
       <span>pathwise</span>
     </a>
     <nav class="header-nav" hidden id="header-nav">
-      <a href="#/settings" class="text-btn">Settings</a>
-      <button id="logout-btn" class="text-btn">Sign out</button>
+      <button id="menu-btn" class="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="menu-panel" aria-haspopup="true">
+        <span class="menu-icon" aria-hidden="true"></span>
+      </button>
+      <div class="menu-panel" id="menu-panel" hidden role="menu">
+        <a href="#/docs" class="menu-item" role="menuitem">Technical details</a>
+        <a href="#/settings" class="menu-item" role="menuitem">Settings</a>
+        <button id="logout-btn" class="menu-item" role="menuitem">Sign out</button>
+      </div>
     </nav>
   </header>
   <main id="view" class="view"></main>

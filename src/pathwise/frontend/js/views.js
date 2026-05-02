@@ -138,21 +138,119 @@ const views = (() => {
   }
 
   // ───────── Home ─────────
-  function home(profile, latestVersion) {
+  function home(profile, mySeasons) {
+    const formatAge = (s) =>
+      s.age_min && s.age_max ? `Ages ${s.age_min}–${s.age_max}` : "";
+    const fmtDate = (ts) => ts
+      ? new Date(ts * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+      : "—";
+
+    const inProgress = mySeasons.length
+      ? card(
+          el("h2", {}, "Your seasons"),
+          el("div", { class: "season-list" },
+            ...mySeasons.map(s => el("a", {
+              class: "season-row",
+              href: `#/season/${s.season_id}/plan`,
+            },
+              el("div", { class: "season-row-head" },
+                el("span", { class: "season-row-name" }, s.name),
+                el("span", { class: "season-row-age" }, formatAge(s)),
+              ),
+              el("p", { class: "season-row-meta" },
+                `${s.plan_count} plan${s.plan_count === 1 ? "" : "s"} · last updated ${fmtDate(s.latest_at)}` +
+                (s.chat_count ? ` · ${s.chat_count} conversation${s.chat_count === 1 ? "" : "s"}` : ""),
+              ),
+            )),
+          ),
+        )
+      : null;
+
     return el("div", {},
       card(
         el("h1", {}, `Hey, ${profile.first_name}.`),
         el("p", { class: "tagline" }, "one step at a time, on purpose."),
-        latestVersion
-          ? el("p", { class: "lede" }, "You can read your latest plan, revise your answers, or generate a new version anytime.")
-          : el("p", { class: "lede" }, "Let's start with a few questions. About 10 minutes."),
+        mySeasons.length
+          ? el("p", { class: "lede" }, "Pick up where you left off, or start a new season.")
+          : el("p", { class: "lede" }, "Pick a season of life to start. About 10 minutes of questions, then a real plan."),
         el("div", { class: "btn-row" },
-          latestVersion
-            ? el("a", { class: "btn btn-accent", href: "#/plan" }, "Read my plan")
-            : el("a", { class: "btn btn-accent", href: "#/season/transition-to-adulthood" }, "Begin"),
-          latestVersion && el("a", { class: "btn btn-secondary", href: "#/season/transition-to-adulthood" }, "Revise my answers"),
+          el("a", {
+            class: "btn btn-accent",
+            href: "#/seasons",
+          }, mySeasons.length ? "Browse seasons" : "Choose a season"),
+          mySeasons.length
+            ? el("a", { class: "btn btn-secondary", href: "#/history" }, "Plan history")
+            : null,
         ),
       ),
+      inProgress,
+    );
+  }
+
+  // ───────── Season picker ─────────
+  function seasons(packs, mySeasonsById) {
+    const formatAge = (p) =>
+      p.age_min && p.age_max ? `Recommended ages ${p.age_min}–${p.age_max}` : "";
+
+    const cards = packs.map(p => {
+      const mine = mySeasonsById.get(p.id);
+      const cta = mine
+        ? el("a", { class: "btn btn-accent", href: `#/season/${p.id}/plan` }, "View latest plan")
+        : el("a", { class: "btn btn-accent", href: `#/season/${p.id}` }, "Start");
+      const secondary = mine
+        ? el("a", { class: "btn btn-secondary", href: `#/season/${p.id}` }, "Revise answers")
+        : null;
+      return card(
+        el("h2", {}, p.name),
+        el("p", { class: "season-age" }, formatAge(p)),
+        el("p", { class: "lede" }, p.summary),
+        mine ? el("p", { class: "season-row-meta" },
+          `${mine.plan_count} plan${mine.plan_count === 1 ? "" : "s"}` +
+          (mine.chat_count ? ` · ${mine.chat_count} conversation${mine.chat_count === 1 ? "" : "s"}` : ""),
+        ) : null,
+        el("div", { class: "btn-row" }, cta, secondary),
+      );
+    });
+
+    return el("div", {},
+      card(
+        el("h1", {}, "Seasons of life"),
+        el("p", { class: "lede" }, "Each season is a different chapter, with its own questions and tradeoffs. Pick the one that fits where you are now."),
+      ),
+      ...cards,
+    );
+  }
+
+  // ───────── Cross-season history ─────────
+  function history(mySeasons) {
+    if (!mySeasons.length) {
+      return card(
+        el("h2", {}, "No plans yet"),
+        el("p", { class: "lede" }, "Once you finish a season, your plans and conversations will live here."),
+        el("div", { class: "btn-row" },
+          el("a", { class: "btn btn-accent", href: "#/seasons" }, "Choose a season"),
+        ),
+      );
+    }
+    const fmt = (ts) => ts
+      ? new Date(ts * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+      : "—";
+    return el("div", {},
+      card(
+        el("h1", {}, "Plan history"),
+        el("p", { class: "lede" }, "Every season you've worked through, with its plans and conversations."),
+      ),
+      ...mySeasons.map(s => card(
+        el("h2", {}, s.name),
+        el("p", { class: "season-row-meta" },
+          `${s.plan_count} plan${s.plan_count === 1 ? "" : "s"} · last updated ${fmt(s.latest_at)}` +
+          (s.chat_count ? ` · ${s.chat_count} conversation${s.chat_count === 1 ? "" : "s"}` : ""),
+        ),
+        el("div", { class: "btn-row" },
+          el("a", { class: "btn btn-accent", href: `#/season/${s.season_id}/plan` }, "Read latest plan"),
+          el("a", { class: "btn btn-secondary", href: `#/season/${s.season_id}/plans` }, "All versions"),
+        ),
+      )),
     );
   }
 
@@ -346,7 +444,7 @@ const views = (() => {
   }
 
   // ───────── Plan ─────────
-  function plan(profile, planText, sources, version, totalVersions, onRegenerate, onRevise) {
+  function plan(profile, seasonId, planText, sources, version, totalVersions, onRegenerate, onRevise) {
     const html = md.render(planText);
     return el("div", {},
       el("div", { class: "plan-content", html }),
@@ -355,14 +453,128 @@ const views = (() => {
         el("ul", {}, ...sources.map(u => el("li", {}, el("a", { href: u, target: "_blank", rel: "noopener noreferrer" }, u)))),
       ) : null,
       el("div", { class: "btn-row" },
+        el("a", { class: "btn btn-accent", href: `#/season/${seasonId}/plan/${version}/chat` }, "Talk it through"),
         el("button", { class: "btn btn-secondary", onclick: onRevise }, "Revise my answers"),
         el("button", { class: "btn", onclick: onRegenerate }, "Generate a new version"),
       ),
       el("p", { class: "progress-label" },
         `Plan v${version}` + (totalVersions > 1 ? ` of ${totalVersions} — ` : ""),
-        totalVersions > 1 ? el("a", { href: "#/plans" }, "view all versions") : null,
+        totalVersions > 1 ? el("a", { href: `#/season/${seasonId}/plans` }, "view all versions") : null,
       ),
     );
+  }
+
+  // ───────── Chat ─────────
+  function chat(profile, seasonId, version, initialTurns, planMarkdown, onSend, onRegenerate) {
+    const root = el("div", {});
+    let userTurnCount = 0;
+    let regenBtn;  // assigned later; guarded inside appendTurn
+    root.appendChild(card(
+      el("h2", {}, `Talk it through`),
+      el("p", { class: "lede" },
+        `Ask anything about your plan v${version}. Push back, explore alternatives, or work through a tradeoff. ` +
+        `It knows the model and your numbers.`
+      ),
+      el("details", { class: "chat-plan" },
+        el("summary", {}, "View plan"),
+        el("div", { class: "plan-content", html: md.render(planMarkdown || "") }),
+      ),
+    ));
+
+    const messagesEl = el("div", { class: "chat-messages" });
+    const turnEls = new Map();
+
+    function bubbleFor(turn) {
+      const wrap = el("div", { class: `chat-bubble chat-${turn.role}` });
+      const body = el("div", { class: "chat-body" });
+      // Render assistant turns through markdown so lists/emphasis work.
+      if (turn.role === "assistant") body.innerHTML = md.render(turn.text);
+      else body.textContent = turn.text;
+      wrap.appendChild(body);
+      return { wrap, body };
+    }
+    function appendTurn(turn) {
+      const { wrap } = bubbleFor(turn);
+      messagesEl.appendChild(wrap);
+      turnEls.set(turn, wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      if (turn.role === "user") {
+        userTurnCount += 1;
+        if (regenBtn) regenBtn.disabled = false;
+      }
+      return wrap;
+    }
+
+    if (initialTurns.length === 0) {
+      messagesEl.appendChild(el("p", { class: "chat-empty" },
+        "No messages yet. Try: \"What's the riskiest part of this plan?\""));
+    }
+    initialTurns.forEach(appendTurn);
+
+    root.appendChild(messagesEl);
+
+    let pending = false;
+    const input = el("textarea", {
+      class: "chat-input",
+      rows: "2",
+      placeholder: "Ask a question…",
+      onkeydown: (e) => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+      },
+    });
+    const sendBtn = el("button", { class: "btn", onclick: () => submit() }, "Send");
+
+    async function submit() {
+      const text = input.value.trim();
+      if (!text || pending) return;
+      // Drop the empty hint if it's still there.
+      const empty = messagesEl.querySelector(".chat-empty");
+      if (empty) empty.remove();
+
+      pending = true;
+      sendBtn.disabled = true;
+      input.disabled = true;
+
+      const userTurn = { role: "user", text, at: Date.now() / 1000 };
+      appendTurn(userTurn);
+      input.value = "";
+
+      const thinking = el("div", { class: "chat-bubble chat-assistant chat-thinking" },
+        el("span", { class: "spinner" }), "Thinking…",
+      );
+      messagesEl.appendChild(thinking);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      try {
+        const res = await onSend(text);
+        thinking.remove();
+        appendTurn(res.assistant);
+      } catch (e) {
+        thinking.remove();
+        toast(e.message, "error");
+      } finally {
+        pending = false;
+        sendBtn.disabled = false;
+        input.disabled = false;
+        input.focus();
+      }
+    }
+
+    root.appendChild(el("div", { class: "chat-composer" }, input, sendBtn));
+
+    regenBtn = el("button", {
+      class: "btn btn-accent",
+      onclick: () => onRegenerate(),
+    }, "Update plan from this conversation");
+    regenBtn.disabled = userTurnCount === 0;
+
+    root.appendChild(el("div", { class: "btn-row" },
+      regenBtn,
+      el("a", { class: "btn btn-secondary", href: `#/season/${seasonId}/plan/${version}` }, "Back to plan"),
+    ));
+
+    setTimeout(() => input.focus(), 50);
+    return root;
   }
 
   // ───────── Settings (edit profile + delete account) ─────────
@@ -451,22 +663,62 @@ const views = (() => {
     );
   }
 
-  // ───────── Plan history (versions list) ─────────
-  function planHistory(versions) {
-    return card(
-      el("h2", {}, "Your plans"),
-      el("p", { class: "lede" },
-        versions.length === 1
-          ? "One plan so far. As you revise your answers and regenerate, every version stays here so you can see how your thinking has shifted."
-          : "Every version of your plan, newest first. Revising your answers and generating again creates a new version — your previous ones stay put."
-      ),
-      el("div", { class: "plan-list" },
-        ...[...versions].reverse().map(v =>
-          el("a", { href: `#/plan/${v.version}` },
-            el("span", { class: "plan-version" }, `Plan v${v.version}`),
-            el("span", { class: "plan-date" }, v.date),
-          ),
+  // ───────── Plan history (versions list, single season) ─────────
+  function planHistory(seasonId, seasonName, versions) {
+    return el("div", {},
+      card(
+        el("h2", {}, `${seasonName} — plan history`),
+        el("p", { class: "lede" },
+          versions.length === 1
+            ? "One plan so far. As you revise your answers and regenerate, every version stays here so you can see how your thinking has shifted."
+            : "Every version of your plan, newest first. Revising your answers and generating again creates a new version — your previous ones stay put."
         ),
+        el("div", { class: "plan-list" },
+          ...[...versions].reverse().map(v => {
+            const row = el("a", { href: `#/season/${seasonId}/plan/${v.version}`, class: "plan-row" },
+              el("div", { class: "plan-row-main" },
+                el("span", { class: "plan-version" }, `Plan v${v.version}`),
+                el("span", { class: "plan-date" }, v.date),
+              ),
+            );
+            if (v.chatMessages > 0) {
+              row.appendChild(el("a", {
+                class: "plan-chat-link",
+                href: `#/season/${seasonId}/plan/${v.version}/chat`,
+                onclick: (e) => e.stopPropagation(),
+              }, `Conversation (${v.chatMessages})`));
+            }
+            return row;
+          }),
+        ),
+        el("div", { class: "btn-row" },
+          el("a", { class: "btn btn-secondary", href: "#/seasons" }, "Back to seasons"),
+        ),
+      ),
+    );
+  }
+
+  // ───────── Docs (technical details) ─────────
+  function docsIndex(docs) {
+    return el("div", {},
+      card(
+        el("h1", {}, "Technical details"),
+        el("p", { class: "lede" },
+          "The thinking and research behind the planner. These are the design docs the model is built on — the math, the assumptions, the tradeoffs."),
+        docs.length
+          ? el("div", { class: "doc-list" },
+              ...docs.map(d => el("a", { class: "doc-row", href: `#/docs/${d.slug}` }, d.title)),
+            )
+          : el("p", { class: "lede" }, "No docs yet."),
+      ),
+    );
+  }
+
+  function docPage(doc) {
+    return el("div", {},
+      el("div", { class: "plan-content", html: md.render(doc.markdown) }),
+      el("div", { class: "btn-row" },
+        el("a", { class: "btn btn-secondary", href: "#/docs" }, "Back to all docs"),
       ),
     );
   }
@@ -498,8 +750,9 @@ const views = (() => {
 
   return {
     el, card, toast,
-    welcome, code, onboarding, home,
-    questionnaire, plan, planHistory, settings,
+    welcome, code, onboarding, home, seasons, history,
+    questionnaire, plan, chat, planHistory, settings,
+    docsIndex, docPage,
     loading, generating, error,
   };
 })();

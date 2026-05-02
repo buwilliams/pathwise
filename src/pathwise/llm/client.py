@@ -194,3 +194,56 @@ def call_plain(
         time.monotonic() - started, len(text), _fmt_usage(usage),
     )
     return LlmCallResult(text=text, sources=[], usage=usage)
+
+
+def call_chat(
+    *,
+    system_prompt: str,
+    messages: list[dict[str, Any]],
+    model: str,
+    max_tokens: int = 2048,
+) -> LlmCallResult:
+    """Single chat turn. System prompt is cached so every follow-up is cheap.
+
+    Sonnet 4.6 with thinking disabled and effort low — the response is grounded
+    in the cached system context (essay + plan + life-state), so we don't need
+    deep reasoning per turn. Optimizes for latency: typical replies in ~3-6s.
+    Streamed for safety on the off chance the model writes a long answer.
+    """
+    client = get_client()
+
+    started = time.monotonic()
+    last_user_chars = sum(
+        len(b.get("text", "")) if isinstance(b, dict) else 0
+        for b in (messages[-1]["content"] if messages and isinstance(messages[-1]["content"], list) else [])
+    ) or (len(messages[-1]["content"]) if messages and isinstance(messages[-1]["content"], str) else 0)
+    logger.info(
+        "llm.chat start model=%s turns=%d last_user_chars=%d",
+        model, len(messages), last_user_chars,
+    )
+    with client.messages.stream(
+        model=model,
+        max_tokens=max_tokens,
+        system=_system_blocks(system_prompt),
+        messages=messages,
+        thinking={"type": "disabled"},
+        output_config={"effort": "low"},
+    ) as stream:
+        response = stream.get_final_message()
+
+    text = "".join(b.text for b in response.content if getattr(b, "type", None) == "text")
+    u = response.usage
+    usage = {
+        k: getattr(u, k, 0) or 0
+        for k in (
+            "input_tokens",
+            "output_tokens",
+            "cache_read_input_tokens",
+            "cache_creation_input_tokens",
+        )
+    }
+    logger.info(
+        "llm.chat done in %.1fs text_chars=%d %s",
+        time.monotonic() - started, len(text), _fmt_usage(usage),
+    )
+    return LlmCallResult(text=text, sources=[], usage=usage)

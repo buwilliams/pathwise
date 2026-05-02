@@ -29,7 +29,14 @@ You have everything needed. Write a calm, specific, digestible plan for **{{ pro
 Estimated impact: cash flow {{ s.cash_flow_delta_str }}/mo, buffer {{ s.buffer_delta_str }}, productive time {{ s.time_delta_str }}.
 
 {% endfor %}
+{% if chat_context %}
+## Conversation since the last plan
 
+{{ profile.first_name }} talked through the previous plan with you. Use what they said to update the new plan. Where the conversation revealed new information about their situation, change the math. Where it revealed a different priority or a misunderstanding, name that explicitly in the recommended path and adjust accordingly. Don't ignore what they pushed back on.
+
+{{ chat_context }}
+
+{% endif %}
 ## Write the plan
 
 Use this exact structure (markdown headings):
@@ -57,6 +64,14 @@ ones — don't pretend they're equal.
 One paragraph. Name the path. Say *why* — connect it back to what they told
 us they value and what the numbers say is viable. Name the independence-ladder
 logic if it applies.
+
+**If the recommended path involves training, school, or a certificate**, you
+must name a specific program from the research bundle's `skill_paths` that
+fits **{{ answers.interests | default("their stated interests") }}**, and say
+in one sentence why it fits. If none of the researched paths fit their
+interests, say so honestly — don't recommend a path that contradicts what
+they told us they care about. If they marked themselves not open to training
+(`interested_in_training` = no), do not push training as the recommendation.
 
 ### The next small step
 

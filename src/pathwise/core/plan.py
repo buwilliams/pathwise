@@ -64,9 +64,17 @@ def generate_plan(
     settings: Settings | None = None,
     research_bundle: ResearchBundle | None = None,
     skip_research: bool = False,
+    chat_context: str | None = None,
 ) -> GeneratedPlan:
-    """Generate a new plan version. ``research_bundle`` lets callers (and tests)
-    inject a pre-built bundle and skip the live LLM web-search call."""
+    """Generate a new plan version.
+
+    ``research_bundle`` lets callers (and tests) inject a pre-built bundle and
+    skip the live LLM web-search call.
+
+    ``chat_context`` is an optional pre-rendered transcript of the conversation
+    the user had about the previous plan version. When present, it's threaded
+    into the synthesis prompt so the new plan reflects what was discussed.
+    """
     settings = settings or get_settings()
 
     profile_service = ProfileService(store)
@@ -122,6 +130,7 @@ def generate_plan(
             "research_json": _pretty_json(research_bundle.data),
             "scored_scenarios": scored,
             "format_answer": _format_answer,
+            "chat_context": chat_context or "",
         },
     )
 

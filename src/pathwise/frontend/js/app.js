@@ -4,7 +4,6 @@
   const root = document.getElementById("view");
   const logoutBtn = document.getElementById("logout-btn");
   const headerNav = document.getElementById("header-nav");
-  const SEASON = "transition-to-adulthood"; // only one for now
 
   // phoneInFlight persists across page refreshes so a refresh on /auth/code
   // doesn't dump the user back to the start. Cleared on successful verify or
@@ -21,14 +20,46 @@
     window.scrollTo({ top: 0, behavior: "instant" });
   }
 
-  function setLogoutVisible(v) { headerNav.hidden = !v; }
+  // ───── Hamburger menu ─────
+  const menuBtn = document.getElementById("menu-btn");
+  const menuPanel = document.getElementById("menu-panel");
+  function setMenuOpen(open) {
+    menuPanel.hidden = !open;
+    menuBtn.setAttribute("aria-expanded", String(open));
+  }
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setMenuOpen(menuPanel.hidden);
+  });
+  // Close on outside click
+  document.addEventListener("click", (e) => {
+    if (!menuPanel.hidden && !menuPanel.contains(e.target) && e.target !== menuBtn) {
+      setMenuOpen(false);
+    }
+  });
+  // Close when a menu item is selected (link click or logout button)
+  menuPanel.addEventListener("click", () => setMenuOpen(false));
+  // Close on Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !menuPanel.hidden) setMenuOpen(false);
+  });
+  // Close on route change as a safety net
+  window.addEventListener("hashchange", () => setMenuOpen(false));
+
+  function setLogoutVisible(v) {
+    headerNav.hidden = !v;
+    if (!v) setMenuOpen(false);
+  }
   logoutBtn.addEventListener("click", async () => {
     // Best-effort: tell the server to invalidate the token, but always clear
     // the local copy so the user is logged out client-side even if offline.
     try { await api.revokeSession(); } catch (_) {}
     api.clearToken();
     phoneInFlight.clear();
-    location.hash = "#/";
+    // If the hash is already "#/", setting it again won't fire hashchange,
+    // so call go() directly to re-route into the welcome view.
+    if (location.hash === "" || location.hash === "#/") go();
+    else location.hash = "#/";
   });
 
   // ───────── Routes ─────────
@@ -55,11 +86,30 @@
       if (route === "" || route === "home") return showHome(me);
       if (route === "onboarding") return showOnboarding();
       if (route === "settings") return showSettings(me);
-      if (route.startsWith("season/")) return showQuestionnaire(me, SEASON);
-      if (route === "plans") return showPlanHistory(me, SEASON);
-      if (route === "plan") return showLatestPlan(me, SEASON);
-      const planMatch = route.match(/^plan\/(\d+)$/);
-      if (planMatch) return showPlanVersion(me, SEASON, parseInt(planMatch[1], 10));
+      if (route === "seasons") return showSeasons(me);
+      if (route === "history") return showHistory(me);
+      if (route === "docs") return showDocs();
+      const docMatch = route.match(/^docs\/(.+)$/);
+      if (docMatch) return showDocPage(docMatch[1]);
+
+      // Season-scoped routes — order matters (longest first).
+      const sChat = route.match(/^season\/([^/]+)\/plan\/(\d+)\/chat$/);
+      if (sChat) return showChat(me, sChat[1], parseInt(sChat[2], 10));
+      const sPlanV = route.match(/^season\/([^/]+)\/plan\/(\d+)$/);
+      if (sPlanV) return showPlanVersion(me, sPlanV[1], parseInt(sPlanV[2], 10));
+      const sLatest = route.match(/^season\/([^/]+)\/plan$/);
+      if (sLatest) return showLatestPlan(me, sLatest[1]);
+      const sPlans = route.match(/^season\/([^/]+)\/plans$/);
+      if (sPlans) return showPlanHistory(me, sPlans[1]);
+      const sQuiz = route.match(/^season\/([^/]+)$/);
+      if (sQuiz) return showQuestionnaire(me, sQuiz[1]);
+
+      // Backward-compat: old top-level plan routes redirect to the picker.
+      if (route === "plans" || route === "plan" ||
+          route.startsWith("plan/")) {
+        location.hash = "#/seasons";
+        return;
+      }
       // unknown — back home
       return showHome(me);
     } catch (e) {
@@ -123,7 +173,7 @@
       try {
         await api.onboard(data);
         phoneInFlight.clear();
-        location.hash = "#/season/" + SEASON;
+        location.hash = "#/seasons";
       } catch (e) { views.toast(e.message, "error"); }
     }));
   }
@@ -154,12 +204,49 @@
     ));
   }
 
-  // ───────── Home ─────────
+  // ───────── Home / seasons / history ─────────
   async function showHome(me) {
     show(views.loading());
-    let versions = [];
-    try { versions = (await api.listPlans(SEASON)).versions; } catch (e) {}
-    show(views.home(me, versions.length ? versions[versions.length - 1] : null));
+    let mine = [];
+    try { mine = (await api.mySeasons()).seasons; } catch (e) {}
+    show(views.home(me, mine));
+  }
+
+  async function showSeasons(me) {
+    show(views.loading("Loading seasons…"));
+    const [packs, mineRes] = await Promise.all([
+      api.seasons(),
+      api.mySeasons().catch(() => ({ seasons: [] })),
+    ]);
+    const mineById = new Map(mineRes.seasons.map(s => [s.season_id, s]));
+    show(views.seasons(packs, mineById));
+  }
+
+  async function showHistory(me) {
+    show(views.loading("Loading your plans…"));
+    const mine = (await api.mySeasons()).seasons;
+    show(views.history(mine));
+  }
+
+  async function showDocs() {
+    show(views.loading("Loading docs…"));
+    const docs = await api.listDocs();
+    show(views.docsIndex(docs));
+  }
+
+  async function showDocPage(slug) {
+    show(views.loading("Loading…"));
+    let doc;
+    try { doc = await api.getDoc(slug); }
+    catch (e) {
+      if (e.status === 404) {
+        views.toast("Doc not found.", "error");
+        location.hash = "#/docs";
+        return;
+      }
+      throw e;
+    }
+    show(views.docPage(doc));
   }
 
   // ───────── Questionnaire ─────────
@@ -181,7 +268,7 @@
         show(views.generating(me));
         try {
           await api.generatePlan(seasonId);
-          location.hash = "#/plan";
+          location.hash = `#/season/${seasonId}/plan`;
         } catch (e) {
           show(views.error(e.message));
         }
@@ -217,7 +304,7 @@
     } catch (e) {
       if (e.status === 404) {
         views.toast(`No plan v${version} found.`, "error");
-        location.hash = "#/plans";
+        location.hash = `#/season/${seasonId}/plans`;
         return;
       }
       throw e;
@@ -228,6 +315,7 @@
   function renderPlan(me, seasonId, p, totalVersions) {
     show(views.plan(
       me,
+      seasonId,
       p.markdown,
       (p.meta && p.meta.sources) || [],
       p.version,
@@ -236,11 +324,37 @@
         show(views.generating(me));
         try {
           await api.generatePlan(seasonId);
-          location.hash = "#/plan";
+          location.hash = `#/season/${seasonId}/plan`;
           go();
         } catch (e) { show(views.error(e.message)); }
       },
       () => { location.hash = "#/season/" + seasonId; },
+    ));
+  }
+
+  async function showChat(me, seasonId, version) {
+    show(views.loading("Loading your conversation…"));
+    let history, planRes;
+    try {
+      [history, planRes] = await Promise.all([
+        api.getChat(seasonId, version),
+        api.getPlan(seasonId, version),
+      ]);
+    } catch (e) {
+      if (e.status === 404) { location.hash = `#/season/${seasonId}/plans`; return; }
+      throw e;
+    }
+    show(views.chat(
+      me, seasonId, version, history.turns, planRes.markdown,
+      async (text) => api.sendChat(seasonId, version, text),
+      async () => {
+        show(views.generating(me));
+        try {
+          const newPlan = await api.regenerateFromChat(seasonId, version);
+          location.hash = `#/season/${seasonId}/plan/${newPlan.version}`;
+          go();
+        } catch (e) { show(views.error(e.message)); }
+      },
     ));
   }
 

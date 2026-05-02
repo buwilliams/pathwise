@@ -32,6 +32,9 @@ class Settings(BaseSettings):
 
     pathwise_plan_model: str = "claude-opus-4-7"
     pathwise_research_model: str = "claude-opus-4-7"
+    # Chat uses Sonnet for snappy back-and-forth — quality is plenty since the
+    # full essay + plan + life-state are pinned in the cached system prompt.
+    pathwise_chat_model: str = "claude-sonnet-4-6"
 
     @property
     def data_dir(self) -> Path:

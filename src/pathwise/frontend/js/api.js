@@ -49,6 +49,7 @@ const api = (() => {
     updateMe: (data)           => request("PATCH", "/me", data),
     deleteMe:                    () => request("DELETE", "/me"),
     seasons:                     () => request("GET", "/seasons"),
+    mySeasons:                   () => request("GET", "/me/seasons"),
     questions: (seasonId)      => request("GET", `/seasons/${seasonId}/questions`),
     getAnswers: (seasonId)     => request("GET", `/seasons/${seasonId}/answers`),
     putAnswers: (seasonId, a)  => request("PUT", `/seasons/${seasonId}/answers`, { answers: a }),
@@ -56,5 +57,10 @@ const api = (() => {
     listPlans: (seasonId)      => request("GET", `/seasons/${seasonId}/plans`),
     getPlan: (seasonId, v)     => request("GET", `/seasons/${seasonId}/plans/${v}`),
     latestPlan: (seasonId)     => request("GET", `/seasons/${seasonId}/plans/latest`),
+    getChat: (seasonId, v)     => request("GET", `/seasons/${seasonId}/plans/${v}/chat`),
+    sendChat: (seasonId, v, text) => request("POST", `/seasons/${seasonId}/plans/${v}/chat`, { text }),
+    regenerateFromChat: (seasonId, v) => request("POST", `/seasons/${seasonId}/plans/${v}/chat/regenerate`),
+    listDocs:                    () => request("GET", "/technical"),
+    getDoc: (slug)             => request("GET", `/technical/${slug}`),
   };
 })();

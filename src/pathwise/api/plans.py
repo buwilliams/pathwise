@@ -34,11 +34,16 @@ def index(season_id: str, store: StoreDep, user_id: CurrentUserId) -> dict[str, 
     enriched = []
     for v in versions:
         meta = store.read_json(store.plan_meta_path(user_id, season_id, v))
+        chat_path = store.chat_history_path(user_id, season_id, v)
+        chat_msgs = 0
+        if chat_path.exists():
+            chat_msgs = len(store.read_jsonl(chat_path))
         enriched.append(
             {
                 "version": v,
                 "generated_at": meta.get("generated_at"),
                 "model_plan": meta.get("model_plan"),
+                "chat_messages": chat_msgs,
             }
         )
     return {"versions": enriched}

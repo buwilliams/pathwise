@@ -56,7 +56,74 @@
 }
 .text-btn:hover { color: var(--ink); }
 
-.header-nav { display: flex; align-items: center; gap: var(--space-1); }
+.header-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Hamburger toggle ── */
+.menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--ink);
+}
+.menu-toggle:hover { background: var(--cream-soft); }
+.menu-icon,
+.menu-icon::before,
+.menu-icon::after {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform .15s var(--ease), opacity .15s var(--ease);
+}
+.menu-icon { position: relative; }
+.menu-icon::before { content: ""; position: absolute; top: -7px; left: 0; }
+.menu-icon::after  { content: ""; position: absolute; top:  7px; left: 0; }
+.menu-toggle[aria-expanded="true"] .menu-icon { background: transparent; }
+.menu-toggle[aria-expanded="true"] .menu-icon::before { transform: translateY(7px) rotate(45deg); }
+.menu-toggle[aria-expanded="true"] .menu-icon::after  { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Dropdown panel ── */
+.menu-panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1.5px solid var(--cream-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(15, 27, 45, 0.15);
+  overflow: hidden;
+  z-index: 50;
+}
+.menu-item {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  text-decoration: none;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  min-height: var(--tap);
+}
+.menu-item:hover { background: var(--cream-soft); }
+.menu-item + .menu-item { border-top: 1px solid var(--cream-soft); }
 
 .btn-row { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
 
@@ -264,6 +331,161 @@
   color: var(--cream);
 }
 .btn-danger:hover { background: #9C3B22; color: var(--cream); }
+
+/* ───────── Season picker / home ───────── */
+.season-age {
+  font-size: 0.85rem;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+}
+.season-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.season-row {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  border: 1.5px solid var(--cream-soft);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color .12s var(--ease);
+}
+.season-row:hover { border-color: var(--terracotta); }
+.season-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-1);
+}
+.season-row-name { font-weight: 500; }
+.season-row-age { font-size: 0.8rem; color: var(--ink-mute); }
+.season-row-meta { font-size: 0.85rem; color: var(--ink-mute); margin: 0; }
+
+.plan-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+.plan-row-main { display: flex; flex-direction: column; }
+.plan-chat-link {
+  font-size: 0.85rem;
+  color: var(--terracotta);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.plan-chat-link:hover { text-decoration: underline; }
+
+/* ───────── Chat ───────── */
+.chat-plan {
+  margin-top: var(--space-3);
+  border-top: 1px dashed var(--cream-soft);
+  padding-top: var(--space-3);
+}
+.chat-plan > summary {
+  cursor: pointer;
+  user-select: none;
+  color: var(--terracotta);
+  font-weight: 500;
+  padding: var(--space-2) 0;
+  list-style: none;
+}
+.chat-plan > summary::-webkit-details-marker { display: none; }
+.chat-plan > summary::before {
+  content: "▸ ";
+  display: inline-block;
+  transition: transform .12s var(--ease);
+}
+.chat-plan[open] > summary::before {
+  content: "▾ ";
+}
+.chat-plan > .plan-content {
+  margin-top: var(--space-3);
+  max-height: 50vh;
+  overflow-y: auto;
+  /* Re-style inside the collapsible: tighter padding so it doesn't dwarf the chat. */
+  padding: var(--space-4);
+  font-size: 0.95rem;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  min-height: 240px;
+  max-height: 60vh;
+  overflow-y: auto;
+  box-shadow: 0 1px 0 rgba(15, 27, 45, 0.04), 0 4px 16px rgba(15, 27, 45, 0.04);
+}
+.chat-empty {
+  color: var(--ink-mute);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-4);
+}
+.chat-bubble {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  max-width: 85%;
+  line-height: 1.5;
+}
+.chat-bubble .chat-body p { margin: 0 0 var(--space-2) 0; }
+.chat-bubble .chat-body p:last-child { margin-bottom: 0; }
+.chat-bubble .chat-body ul,
+.chat-bubble .chat-body ol { margin: var(--space-2) 0; padding-left: var(--space-5); }
+.chat-user {
+  align-self: flex-end;
+  background: var(--ink);
+  color: var(--cream);
+}
+.chat-assistant {
+  align-self: flex-start;
+  background: var(--cream-soft);
+  color: var(--ink);
+}
+.chat-thinking { color: var(--ink-mute); font-style: italic; }
+.chat-composer {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-end;
+  margin-bottom: var(--space-3);
+}
+.chat-input {
+  flex: 1;
+  min-height: var(--tap);
+  padding: var(--space-3);
+  border: 1.5px solid var(--cream-soft);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+}
+.chat-input:focus {
+  outline: 0;
+  border-color: var(--terracotta);
+  box-shadow: 0 0 0 3px rgba(232, 152, 92, 0.18);
+}
+.chat-composer .btn { width: auto; min-width: 80px; }
+
+/* ───────── Docs ───────── */
+.doc-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.doc-row {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  border: 1.5px solid var(--cream-soft);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--ink);
+  font-weight: 500;
+  transition: border-color .12s var(--ease);
+}
+.doc-row:hover { border-color: var(--terracotta); }
 
 /* ───────── Plan history list ───────── */
 .plan-list { display: flex; flex-direction: column; gap: var(--space-2); }

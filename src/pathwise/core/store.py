@@ -137,6 +137,9 @@ class FileStore:
     def plan_meta_path(self, user_id: str, season_id: str, version: int) -> Path:
         return self.plans_dir(user_id, season_id) / f"plan_v{version}.meta.json"
 
+    def chat_history_path(self, user_id: str, season_id: str, version: int) -> Path:
+        return self.plans_dir(user_id, season_id) / f"plan_v{version}.chat.jsonl"
+
     def list_plan_versions(self, user_id: str, season_id: str) -> list[int]:
         d = self.plans_dir(user_id, season_id)
         if not d.exists():
