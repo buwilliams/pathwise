@@ -1,5 +1,7 @@
 # Building Independence — A Life-Strategy Model for Teens
 
+The implementation of this model is the [pathwise](https://github.com/buwilliams/pathwise) app. This document defines the model. It does not draw a conclusion about what any specific teen should do.
+
 ## 1. Problem Domain: Considerations and Symbol Definitions
 
 A teen graduating high school is beginning the transition into adult life. They want more independence and are considering major life decisions such as buying a car, working more, moving out, and choosing a path toward higher income.
@@ -10,14 +12,14 @@ The purpose of this model is not to prove the one correct answer. The purpose is
 
 The guiding idea is:
 
-> A good plan should generate positive momentum across their values, time, and money, without creating excessive fragility.
+> A good plan should generate positive momentum across their values, time, and assets, without creating excessive fragility.
 
 ### Core Life-State Model
 
 Let:
 
 $$
-L = \{V, T, M, Y, K\}
+L = \{V, T, A, Y, K, H\}
 $$
 
 Where:
@@ -27,11 +29,14 @@ Where:
 | $L$ | Life-state |
 | $V$ | Values |
 | $T$ | Time |
-| $M$ | Money |
+| $A$ | Assets |
 | $Y$ | Income |
 | $K$ | Skills / credentials |
+| $H$ | Emotional cost |
 
 A life-state is not just whether a teen can afford something today. A life-state describes whether their overall situation is becoming stronger, weaker, freer, or more fragile.
+
+Two further symbols, fragility ($F$) and recoverability ($R$), are introduced later but sit outside $L$ on purpose. $F$ is a derived measure of how exposed a life-state is to shocks. $R$ is a property of a particular decision, not of the state itself.
 
 ### Values
 
@@ -80,29 +85,39 @@ $$
 
 This means moving out may feel like independence while reducing total practical freedom.
 
-### Home Emotional Cost
+### Emotional Cost
 
 Let:
 
 $$
-H = \text{home emotional cost}
+H = \text{emotional cost}
 $$
 
-Staying with a parent reduces money pressure, but it is not emotionally free. Home can carry costs in privacy, autonomy, conflict, infantilization, commute, or family stress. These costs are real even when they do not appear on a balance sheet.
+Many decisions carry an emotional cost beyond their financial one. Staying with a parent saves money but can pay in privacy, autonomy, conflict, infantilization, or feeling stuck. A draining job or long commute pays in chronic stress and lost time. An intensive training path pays in discipline cost, delayed gratification, and self-doubt. The wrong roommate pays in friction. Even a car can pay in maintenance anxiety, traffic fatigue, or the pressure of an insurance bill. These costs are real even when they do not appear on a balance sheet.
 
-The model should not treat the stay-home baseline as a costless reference point. $H$ is paid in reductions to $e$ (enjoyable life) and $s$ (stability / emotional safety), and sometimes in $g$ (goal progress) when home dynamics block momentum.
+The model should not treat any choice as emotionally free by default. $H$ varies by scenario. $H(s)$ is paid in reductions to $e$ (enjoyable life) and $s$ (stability / emotional safety), and sometimes in $g$ (goal progress) when emotional pressure blocks momentum.
 
-This matters because $H$ changes when moving out becomes rational. When $H$ is low, the case for delaying move-out is strong. When $H$ is high enough, moving out can be the higher-momentum choice even when the financial picture is worse.
+Examples:
+
+| Choice | Possible emotional cost |
+|---|---|
+| Stay at home | Privacy, autonomy, conflict, family stress |
+| Move out | Financial pressure, isolation, household labor, instability of a new arrangement |
+| Long-hour job | Chronic stress, fatigue, lost social and rest time |
+| Intensive training | Discipline cost, delayed gratification, self-doubt |
+| Car ownership | Maintenance anxiety, commute fatigue, repair stress |
+
+This matters because comparing two choices requires comparing their full costs, not just their financial ones. A choice that looks cheaper financially can be more expensive emotionally, and a choice that looks expensive financially can pay for itself in restored peace, energy, or pride.
 
 In notation:
 
 $$
-i_3 \uparrow \text{ becomes rational as } H \text{ rises}
+\text{a choice becomes more attractive as } H(\text{alternative}) - H(\text{this choice}) \text{ rises}
 $$
 
 Plain English:
 
-> Moving out can be the right move when home is emotionally costly enough that the cost of staying outweighs the cost of leaving.
+> A plan that saves money but destroys peace is not a good plan. A plan that costs money but restores peace can be the right plan when the emotional gain is real.
 
 ### Time
 
@@ -130,12 +145,12 @@ $$
 
 A plan can work on paper but fail if the remaining hours are low-quality, tired, scattered, or emotionally overloaded.
 
-### Money
+### Assets
 
 Let:
 
 $$
-M = \{c, a, d, r\}
+A = \{c, \sigma, d, r\}
 $$
 
 Where:
@@ -143,7 +158,7 @@ Where:
 | Symbol | Meaning |
 |---|---|
 | $c$ | Monthly cash flow |
-| $a$ | Assets / savings |
+| $\sigma$ | Savings |
 | $d$ | Debt / liabilities |
 | $r$ | Risk buffer / emergency fund |
 
@@ -217,7 +232,7 @@ $$
 Or more fully:
 
 $$
-K \rightarrow Y \rightarrow M \rightarrow T \rightarrow V
+K \rightarrow Y \rightarrow A \rightarrow T \rightarrow V
 $$
 
 This means skill-building is not merely another goal. It is a lever that changes what life-states are possible.
@@ -227,12 +242,12 @@ This means skill-building is not merely another goal. It is a lever that changes
 Define:
 
 $$
-L_{desirable} = \{L_s : V_s \geq V_{min} \land T_s \geq T_{min} \land M_s \geq M_{min} \land Y_s \geq Y_{min}\}
+L_{desirable} = \{L_s : V_s \geq V_{min} \land T_s \geq T_{min} \land A_s \geq A_{min} \land Y_s \geq Y_{min}\}
 $$
 
 Plain English:
 
-> A desirable life-state is one where values, time, money, and income all meet minimum acceptable thresholds.
+> A desirable life-state is one where values, time, assets, and income all meet minimum acceptable thresholds.
 
 A key distinction:
 
@@ -253,10 +268,10 @@ The target is not merely independence today. The target is positive momentum.
 Let:
 
 $$
-Momentum(L) = f(V, T, M, Y, K)
+Momentum(L) = f(V, T, A, Y, K, H)
 $$
 
-A plan has positive momentum when their values, time, money, income, and skill path reinforce one another.
+A plan has positive momentum when their values, time, assets, income, and skill path reinforce one another while emotional cost stays low.
 
 A good plan should tend toward:
 
@@ -357,7 +372,7 @@ $$
 Where:
 
 $$
-L_s = \{V_s, T_s, M_s, Y_s, K_s\}
+L_s = \{V_s, T_s, A_s, Y_s, K_s, H_s\}
 $$
 
 Plain English:
@@ -446,6 +461,8 @@ Possible initial weights:
 
 Cash flow, risk buffer, and emotional stability should likely receive high weights because when they collapse, the whole life-state becomes fragile.
 
+Emotional cost $H$ does not appear directly in the score. Its effect flows through $e_s$, $s_s$, and $g_s$, which it depresses when high. The weights on those three carry the emotional load.
+
 The best scenario is:
 
 $$
@@ -526,7 +543,7 @@ $$
 
 Plain English:
 
-> The best path is the path with the most positive momentum, ending in a desirable life-state, while keeping fragility below the danger threshold at each step and ensuring large decisions remain recoverable.
+> The best path is the path with the most positive momentum, ending in a desirable life-state, while keeping fragility below the danger threshold at each step and ensuring that large decisions remain recoverable.
 
 ### Independence Ladder
 
@@ -545,88 +562,21 @@ Where:
 | $i_3$ | Residential independence | Living outside a parent's home |
 | $i_4$ | Decision independence | Control over life choices and direction |
 
-A strong conjecture:
+The ladder is a structural claim about the model: independence is multi-dimensional, and gains in one dimension can come at the cost of another. The model does not prescribe an ordering. Different paths may climb the ladder in different orders, and the momentum, viability, and recoverability filters are what distinguish good orderings from bad ones in any given case.
 
-> The best path may be to build mobility and financial independence before residential independence.
+### Model-Level Falsifiability
 
-In plain English:
-
-> Become independent in the order that compounds.
-
-### First Working Conjecture
-
-The first path to test:
-
-$$
-P_1 = \text{low housing cost} + \text{modest reliable car} + \text{income growth path} + \text{delayed move-out}
-$$
-
-Expected effects:
-
-$$
-i_1 \uparrow, \quad i_2 \uparrow, \quad g \uparrow, \quad r \uparrow, \quad i_3 \text{ delayed}
-$$
-
-Plain English:
-
-> A teen may gain more real independence by delaying apartment independence while building mobility, savings, income, and future options.
-
-This is not anti-independence. It is pro-compounding-independence.
-
-### Criticism of Moving Out Too Early
-
-If housing costs are too high relative to income, then moving out may produce apparent independence but reduce real freedom.
-
-For example:
-
-$$
-i_3 \uparrow
-$$
-
-but:
-
-$$
-c \downarrow, \quad r \downarrow, \quad p \downarrow, \quad g \downarrow, \quad s \downarrow
-$$
-
-Plain English:
-
-> Moving out may increase residential independence while reducing cash flow, savings, productive time, goal progress, and stability.
-
-This gives us the central criticism:
-
-> A move is not good merely because it increases one form of independence. A move is good when it increases total life momentum.
-
-### Falsifiability of the Working Conjecture
-
-The first working conjecture says: build mobility and financial independence before residential independence. This is a default, not a verdict. To prevent it from hardening into a foregone conclusion, the model should state what evidence would overturn it.
-
-What would make moving out sooner the right plan:
-
-- Rent is low enough that $c \geq 0$ at the stated work hours.
-- Risk buffer remains above $r_{min}$ after deposit and move-in costs.
-- Home emotional cost $H$ is high enough that staying degrades $e$, $s$, or $g$.
-- The roommate or housing arrangement is stable.
-- The lease is short or otherwise recoverable, so $R(\text{move-out}) \geq R_{min}$.
-- Income is stable enough to sustain rent without work hours that collapse productive time.
-
-What would make delaying move-out the right call:
-
-- Home emotional cost $H$ is tolerable.
-- Savings would grow meaningfully in the delay window.
-- A car or credential path during the delay would unlock higher income.
-- Available rent options would force $c < 0$ or $r < r_{min}$.
-- Current income is unstable.
-
-What would change our mind about the model itself:
+The model itself is a conjecture and should be revisable. Conditions that should trigger revision:
 
 - A scenario produces high momentum but feels emotionally wrong to the teen. (A value is missing or mis-weighted.)
 - A scenario looks viable on paper but fails repeatedly in practice. (A constraint is uncosted.)
 - The teen's stated values shift in a stable, considered way. ($V$ needs updating.)
+- A variable in $L$ turns out to be redundant, or a needed variable is missing.
+- The weights in $Momentum(s)$ produce rankings that contradict considered judgment across many scenarios.
 
 Plain English:
 
-> The working conjecture should hold only as long as the conditions above hold. When they stop holding, the conjecture should be replaced.
+> The model is a tool for thinking, not a verdict. When it stops fitting reality, change the model.
 
 ---
 
@@ -742,10 +692,9 @@ For a parent, mentor, coach, or anyone helping a teen sort through this:
 6. Which scenario feels good emotionally but fails structurally?
 7. Which scenario is financially safe but emotionally unacceptable?
 8. Which path gives them the most real independence over 12–24 months?
-9. What would change my mind about the first working conjecture?
-10. What would make moving out sooner a good plan?
-11. What would make buying a car now a good plan?
-12. What would make delaying both the car and apartment a good plan?
+9. What would make moving out sooner a good plan?
+10. What would make buying a car now a good plan?
+11. What would make delaying both the car and apartment a good plan?
 
 ### Questions for the Helper: Communication
 
@@ -767,7 +716,3 @@ A possible way to frame the whole process:
 Another possible frame:
 
 > "You do not have to become independent all at once. We can figure out the order that gives you the most real freedom with the least unnecessary stress."
-
-And the simplest guiding sentence:
-
-> "Become independent in the order that compounds."

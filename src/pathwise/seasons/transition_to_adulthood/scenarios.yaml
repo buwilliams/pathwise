@@ -46,7 +46,7 @@ scenarios:
 
   - id: low_rent_modest_car_grow_income
     label: "Stay low-rent, modest car, grow income, move out later"
-    description: "The independence-ladder path: build mobility and financial independence first, take residential independence later from a stronger position."
+    description: "Build several dimensions of independence in parallel — mobility, financial, and skill — while deferring residential independence. Trades immediate move-out for a stronger position later."
     car: true
     moves_out: false
     income_growth: true

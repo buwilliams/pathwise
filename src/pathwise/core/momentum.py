@@ -14,13 +14,18 @@ fetched at plan time). Then we apply:
 The wisdom (final plan synthesis) is done by the LLM — this layer's job
 is to filter and rank so the LLM is grounded in actual numbers.
 
-Scoring components (as of v0.2.0):
-    i, n, e, g, s, p, c, r, y      — original V/T/M/Y momentum components
-    h                              — home emotional cost (rewards moving out
-                                     when home is hard; penalizes staying)
+Scoring components (as of v0.3.0):
+    i, n, e, g, s, p, c, r, y      — V/T/A/Y/K momentum components from L
     rec                            — per-decision recoverability (rewards
                                      reversible choices; penalizes irreversible
                                      ones, especially when buffer is thin)
+
+Per the essay (§Momentum Score): emotional cost H does NOT appear directly
+in the momentum sum. Each scenario has a per-scenario H(s) computed from
+the user's stated home_emotional_cost plus the inherent emotional load of
+the choice (move-out arrangement, training discipline, car ownership). H(s)
+then depresses e (enjoyable), s (stability), and g (goal progress) when
+high. The weights on those three carry the emotional load.
 """
 
 from __future__ import annotations
@@ -296,40 +301,64 @@ def _score_net_worth(state: dict[str, float], life: LifeState) -> float:
     return max(-1.0, min(1.0, delta / base))
 
 
-def _score_enjoyable(state: dict[str, float], life: LifeState) -> float:
+def _score_enjoyable(scenario: Scenario, state: dict[str, float], life: LifeState) -> float:
     # Heavy negative cash flow or zero productive time crushes enjoyment
     if state["cash_flow"] < 0:
         return -0.5
     if state["productive_hours"] < MIN_PRODUCTIVE_HOURS_PER_WEEK:
         return -0.5
-    return 0.0
+    # Per essay §Emotional Cost: H depresses enjoyment when high.
+    return max(-1.0, 0.0 - _h_penalty(_scenario_H(scenario, life), 0.30))
 
 
 def _score_goals(scenario: Scenario, life: LifeState) -> float:
     if scenario.income_growth and life.interested_in_training:
-        return 1.0
-    if scenario.income_growth:
-        return 0.3
-    return 0.0
+        base = 1.0
+    elif scenario.income_growth:
+        base = 0.3
+    else:
+        base = 0.0
+    # H depresses goal progress when emotional pressure blocks momentum.
+    return max(-1.0, base - _h_penalty(_scenario_H(scenario, life), 0.20))
 
 
-def _score_home_emotional(scenario: Scenario, life: LifeState) -> float:
-    """Reward moving out when home is hard; reward staying when home is fine.
+def _scenario_H(scenario: Scenario, life: LifeState) -> float:
+    """Per-scenario emotional cost in 0..3, per build-independence.md §Emotional Cost.
 
-    The user's `home_emotional_cost` field is 0..3:
-        0.0  peaceful — home is a real asset; moving costs more than it gives
-        1.0  fine     — neutral
-        2.0  tense    — moving begins to look reasonable
-        3.0  hard     — staying actively damages enjoyment & stability
+    H is the cost paid by *this specific scenario*, not just by the home situation.
+    It accumulates across the emotionally-loaded commitments the scenario implies:
+
+    - Stay-home scenarios pay the user's stated stay-home emotional cost
+      (peaceful=0, fine=1, tense=2, hard=3 from the questionnaire).
+    - Move-out scenarios pay a baseline 1.0 for the financial pressure / new
+      arrangement / household labor a fresh living situation introduces.
+    - Acquiring a car the teen doesn't have adds maintenance anxiety / repair
+      stress (+0.3).
+    - Pursuing intensive training when they're open to it adds discipline cost
+      and delayed gratification (+0.5).
     """
-    h = life.home_emotional_cost
-    if scenario.moves_out:
-        # Linear: hard home (3) → +1.0; peaceful home (0) → -0.5
-        return max(-1.0, min(1.0, (h - 1.0) / 2.0))
-    # Stay-home scenario
-    if h >= 2.0:
-        return -((h - 1.0) / 2.0)  # tense → -0.5, hard → -1.0
-    return 0.0
+    if scenario.moves_out or not life.lives_with_parents:
+        h = 1.0  # baseline emotional cost of move-out / living independently
+    else:
+        h = life.home_emotional_cost  # the user's stated cost of staying home
+
+    if scenario.car and not life.has_car:
+        h += 0.3
+    if scenario.income_growth and life.interested_in_training:
+        h += 0.5
+    return min(3.0, h)
+
+
+def _h_penalty(h: float, scale: float) -> float:
+    """Linear penalty applied to e/s/g when H is above the 'fine' baseline of 1.0.
+
+    Returns 0 when H ≤ 1.0; grows linearly above. The scale parameter lets
+    callers tune how steeply each variable degrades:
+        e: 0.30  (enjoyment is most directly hit by emotional cost)
+        s: 0.25  (stability gets hit, but not as completely)
+        g: 0.20  (goals can sometimes survive emotional pressure)
+    """
+    return max(0.0, h - 1.0) * scale
 
 
 def _score_recoverability(scenario: Scenario, life: LifeState) -> float:
@@ -343,7 +372,7 @@ def _score_recoverability(scenario: Scenario, life: LifeState) -> float:
     return max(-1.0, min(1.0, base))
 
 
-def _score_stability(state: dict[str, float], life: LifeState) -> float:
+def _score_stability(scenario: Scenario, state: dict[str, float], life: LifeState) -> float:
     if state["cash_flow"] < 0:
         return -1.0
     if life.emergency_fund_floor > 0 and state["assets_after"] < life.emergency_fund_floor:
@@ -353,7 +382,11 @@ def _score_stability(state: dict[str, float], life: LifeState) -> float:
     pressure_ok = {"zero": 1.0, "mild": 0.7, "moderate": 0.4, "high": 0.0}.get(
         life.monthly_pressure_comfort, 0.5
     )
-    return max(-1.0, min(1.0, (state["buffer_months"] / 6.0) * pressure_ok))
+    base = (state["buffer_months"] / 6.0) * pressure_ok
+    clamped = max(-1.0, min(1.0, base))
+    # H depresses emotional safety when high. Apply *after* the clamp so a
+    # maxed-out stability score still shows the H hit.
+    return max(-1.0, clamped - _h_penalty(_scenario_H(scenario, life), 0.25))
 
 
 # ---------------------------------------------------------------------------
@@ -372,14 +405,13 @@ def score_scenario(
     component_scores = {
         "i": _score_independence(scenario, life),
         "n": _score_net_worth(state, life),
-        "e": _score_enjoyable(state, life),
+        "e": _score_enjoyable(scenario, state, life),
         "g": _score_goals(scenario, life),
-        "s": _score_stability(state, life),
+        "s": _score_stability(scenario, state, life),
         "p": _score_productive_time(state, life),
         "c": _score_cash_flow(state, life),
         "r": _score_risk_buffer(state, life),
         "y": _score_income(state, life),
-        "h": _score_home_emotional(scenario, life),
         "rec": _score_recoverability(scenario, life),
     }
 

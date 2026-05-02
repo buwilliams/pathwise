@@ -14,7 +14,7 @@ You have everything needed. Write a calm, specific, digestible plan for **{{ pro
 - Current emergency buffer relative to their floor: **{{ life_state.buffer_status }}**
 - Productive time band: **{{ life_state.productive_time_band }}**
 - Stated top value: **{{ life_state.top_value }}**
-- Home emotional cost: **{{ life_state.home_emotional_label }}** ({% if not life_state.lives_with_parents %}lives independently{% else %}lives with family{% endif %})
+- Stay-home emotional cost (H for the stay-home scenarios): **{{ life_state.home_emotional_label }}** ({% if not life_state.lives_with_parents %}lives independently{% else %}lives with family{% endif %})
 
 ## What we looked up
 
@@ -79,7 +79,7 @@ Render exactly three subsections — one per bucket — using `####` headings. *
 
 ### Our current best conjecture
 
-**One paragraph.** Name which path the math currently favors. Open with the framing: *"Given what you've told us, this seems strongest right now."* Then explain *why* in plain language — connect it to their stated top value, their cash flow / buffer / productive time, their home emotional cost, and (if relevant) the independence-ladder logic. End by naming the specific scenario inside that bucket.
+**One paragraph.** Name which path the math currently favors. Open with the framing: *"Given what you've told us, this seems strongest right now."* Then explain *why* in plain language — connect it to their stated top value, their cash flow / buffer / productive time, and their emotional cost (what staying or moving or training would emotionally pay). Do not lean on a prescribed "build mobility/financial first" ordering — the model treats the independence ladder as multi-dimensional, not sequential. End by naming the specific scenario inside the favored bucket.
 
 **If the recommendation involves training, school, or a certificate**, you must name a specific program from the research bundle's `skill_paths` that fits **{{ answers.interests | default("their stated interests") }}**, and say in one sentence why it fits. If none of the researched paths fit their interests, say so honestly — don't recommend a path that contradicts what they told us. If they marked themselves not open to training (`interested_in_training` = no), do not push training as the recommendation.
 

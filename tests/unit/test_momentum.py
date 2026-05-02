@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathwise.core.life_state import compute_life_state
 from pathwise.core.momentum import (
-    _score_home_emotional,
+    _scenario_H,
     _score_recoverability,
     score_all,
     score_scenario,
@@ -127,38 +127,78 @@ def _make_scenario(
     )
 
 
-def test_score_home_emotional_rewards_moving_out_when_home_is_hard() -> None:
+def test_scenario_H_stay_home_uses_user_stated_cost() -> None:
+    """Per essay §Emotional Cost: stay-home scenarios pay the user's stated H."""
+    for choice, expected in [("peaceful", 0.0), ("fine", 1.0), ("tense", 2.0), ("hard", 3.0)]:
+        life = compute_life_state(
+            {"lives_with_parents": True, "home_emotional_cost": choice}
+        )
+        assert _scenario_H(_make_scenario(moves_out=False), life) == expected
+
+
+def test_scenario_H_move_out_baseline_is_one() -> None:
+    """Move-out scenarios pay a baseline H regardless of how nice home was —
+    financial pressure / new arrangement / household labor."""
+    for choice in ["peaceful", "fine", "tense", "hard"]:
+        life = compute_life_state(
+            {"lives_with_parents": True, "home_emotional_cost": choice}
+        )
+        assert _scenario_H(_make_scenario(moves_out=True), life) == 1.0
+
+
+def test_scenario_H_already_independent_pays_baseline() -> None:
+    """Someone who already lives independently pays the move-out baseline,
+    not the user's home-emotional-cost answer (which would be irrelevant)."""
     life = compute_life_state(
-        {"lives_with_parents": True, "home_emotional_cost": "hard"}
+        {"lives_with_parents": False, "home_emotional_cost": "hard"}
     )
-    move_out = _make_scenario(moves_out=True)
-    score = _score_home_emotional(move_out, life)
-    assert score > 0.5  # hard home + move-out scenario = strong positive
+    assert _scenario_H(_make_scenario(moves_out=False), life) == 1.0
 
 
-def test_score_home_emotional_penalizes_moving_out_when_home_is_peaceful() -> None:
+def test_scenario_H_accumulates_extra_emotional_loads() -> None:
+    """Car ownership and intensive training add to H per the essay's examples table."""
     life = compute_life_state(
-        {"lives_with_parents": True, "home_emotional_cost": "peaceful"}
+        {"lives_with_parents": True, "home_emotional_cost": "fine", "interested_in_training": True}
     )
-    move_out = _make_scenario(moves_out=True)
-    score = _score_home_emotional(move_out, life)
-    assert score < 0  # peaceful home + move-out = mild negative
+    base = _scenario_H(Scenario(id="x", label="x", description="", car=False, moves_out=False, income_growth=False), life)
+    with_car = _scenario_H(Scenario(id="x", label="x", description="", car=True, moves_out=False, income_growth=False), life)
+    with_training = _scenario_H(Scenario(id="x", label="x", description="", car=False, moves_out=False, income_growth=True), life)
+    with_both = _scenario_H(Scenario(id="x", label="x", description="", car=True, moves_out=False, income_growth=True), life)
+    assert with_car == base + 0.3
+    assert with_training == base + 0.5
+    assert with_both == base + 0.8
 
 
-def test_score_home_emotional_penalizes_staying_when_home_is_hard() -> None:
-    life = compute_life_state(
-        {"lives_with_parents": True, "home_emotional_cost": "hard"}
-    )
-    stay = _make_scenario(moves_out=False)
-    assert _score_home_emotional(stay, life) < -0.5
+def test_high_H_depresses_enjoyable_stability_goals_via_penalty() -> None:
+    """Hard home + stay-home scenario should score worse on e/s/g than the
+    same scenario with peaceful home, even though i/n/y/r are identical."""
+    pack = get_pack("transition-to-adulthood")
+    base_answers = _emma_answers()
+    stay = next(x for x in pack.scenarios if x.id == "stay_no_car_save")
+
+    peaceful = compute_life_state({**base_answers, "home_emotional_cost": "peaceful"})
+    hard = compute_life_state({**base_answers, "home_emotional_cost": "hard"})
+
+    p_scored = score_scenario(stay, peaceful, pack.weights)
+    h_scored = score_scenario(stay, hard, pack.weights)
+
+    # H modulates e, s, g via _h_penalty — each should be lower under hard home.
+    assert h_scored.component_scores["e"] < p_scored.component_scores["e"]
+    assert h_scored.component_scores["s"] < p_scored.component_scores["s"]
+    # Goals: stay_no_car_save has income_growth=False, so the base is 0.0 for
+    # both, but H penalty (scale 0.20) still depresses hard relative to peaceful.
+    assert h_scored.component_scores["g"] < p_scored.component_scores["g"]
+    # Total momentum should reflect the e/s/g hit.
+    assert h_scored.momentum < p_scored.momentum
 
 
-def test_score_home_emotional_neutral_when_home_is_fine_and_staying() -> None:
-    life = compute_life_state(
-        {"lives_with_parents": True, "home_emotional_cost": "fine"}
-    )
-    stay = _make_scenario(moves_out=False)
-    assert _score_home_emotional(stay, life) == 0.0
+def test_h_does_not_appear_in_component_scores() -> None:
+    """Per essay: H does not appear directly in the score. Verify no `h` key."""
+    pack = get_pack("transition-to-adulthood")
+    life = compute_life_state(_emma_answers())
+    s = pack.scenarios[0]
+    scored = score_scenario(s, life, pack.weights)
+    assert "h" not in scored.component_scores
 
 
 def test_score_recoverability_returns_expected_bands() -> None:

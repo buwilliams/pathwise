@@ -6,7 +6,7 @@ A life-strategy planner for teens. Pathwise turns a formal life-state model into
 
 ## Origin
 
-Pathwise is built on the essay [**Emma's Life Strategy Model**](https://github.com/buwilliams/buddy-williams-writings/blob/main/fragments/emma-life-strategy-model.md) — a formal model of life-state `L = {V, T, M, Y, K}` with viability, momentum, and fragility math, and an "independence ladder" conjecture. The essay is the source of truth for the wisdom; this repo is the software that makes it usable.
+Pathwise is built on the essay [**Emma: Build Independence**](https://github.com/buwilliams/buddy-williams-writings/blob/main/fragments/emma-build-independence.md) — a formal model of life-state `L = {V, T, M, Y, K}` with viability, momentum, and fragility math, and an "independence ladder" conjecture. The essay is the source of truth for the wisdom; this repo is the software that makes it usable.
 
 ## What's here
 

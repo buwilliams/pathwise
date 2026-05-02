@@ -1,23 +1,25 @@
 # Momentum-score weights, taken from the suggested table in
-# build-independence.md §Momentum Score, then extended for the v0.2.0 model
-# additions (Home emotional cost, Recoverability).
+# build-independence.md §Momentum Score.
 #
-# Naming note: the essay uses lowercase `r` for risk buffer and uppercase `R`
-# for recoverability. Here we keep `r` = risk buffer (existing) and use `rec`
-# for recoverability so YAML keys stay unambiguous.
+# Per the essay: emotional cost (H) does NOT appear directly in the score.
+# Its effect flows through e (enjoyable), s (stability), and g (goal
+# progress), which it depresses when high. The weights on those three
+# carry the emotional load. So there is no `h` weight here by design.
 #
-# Cash flow, risk buffer, and emotional stability are weighted highest because
-# when they collapse the whole life-state becomes fragile. The new H and `rec`
-# weights (3) sit at Tier 2 — meaningful but not load-bearing.
+# Recoverability (R) is a per-scenario constraint surfaced as `rec` —
+# it sits outside L but contributes to momentum so paths that lock in
+# irreversible decisions are penalized.
+#
+# Cash flow, risk buffer, and stability stay highest because when they
+# collapse the whole life-state becomes fragile.
 weights:
   i: 2     # independence (composite)
   n: 3     # positive net worth
-  e: 2     # enjoyable life
-  g: 3     # goal progress
-  s: 4     # stability / emotional safety
+  e: 2     # enjoyable life          (depressed by H when high)
+  g: 3     # goal progress           (depressed by H when high)
+  s: 4     # stability / emotional safety  (depressed by H when high)
   p: 2     # productive time
   c: 4     # cash flow
   r: 4     # risk buffer
   y: 3     # income
-  h: 3     # home emotional cost (penalize staying when home costs are high)
   rec: 3   # recoverability (per-decision reversibility)
