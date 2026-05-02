@@ -197,6 +197,18 @@ questions:
     max: 100
     unit: "%"
 
+  - key: home_emotional_cost
+    section: move
+    type: single_choice
+    required: false
+    prompt: "How does living at home feel right now?"
+    help: "Skip if you don't live with family. Staying home is cheaper financially, but not always emotionally — we'd rather know."
+    options:
+      - { value: peaceful, label: "Peaceful — I have what I need here" }
+      - { value: fine, label: "Fine — some friction but mostly okay" }
+      - { value: tense, label: "Tense — there's pressure I'd like to escape" }
+      - { value: hard, label: "Hard — staying is costing me real wellbeing" }
+
   # ── Life ───────────────────────────────────────────────────────────
   - key: productive_hours_per_week
     section: life

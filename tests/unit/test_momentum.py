@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 from pathwise.core.life_state import compute_life_state
-from pathwise.core.momentum import score_all, score_scenario
-from pathwise.core.season import get_pack
+from pathwise.core.momentum import (
+    _score_home_emotional,
+    _score_recoverability,
+    score_all,
+    score_scenario,
+)
+from pathwise.core.season import Scenario, get_pack
 
 
 def _emma_answers() -> dict:
@@ -106,6 +111,93 @@ def test_research_overrides_defaults() -> None:
     cheap_score = score_scenario(s, life, pack.weights, cheap)
     exp_score = score_scenario(s, life, pack.weights, expensive)
     assert cheap_score.cash_flow_monthly > exp_score.cash_flow_monthly
+
+
+def _make_scenario(
+    *, moves_out: bool = False, recoverability: str = "medium"
+) -> Scenario:
+    return Scenario(
+        id="test",
+        label="test",
+        description="",
+        car=False,
+        moves_out=moves_out,
+        income_growth=False,
+        recoverability=recoverability,
+    )
+
+
+def test_score_home_emotional_rewards_moving_out_when_home_is_hard() -> None:
+    life = compute_life_state(
+        {"lives_with_parents": True, "home_emotional_cost": "hard"}
+    )
+    move_out = _make_scenario(moves_out=True)
+    score = _score_home_emotional(move_out, life)
+    assert score > 0.5  # hard home + move-out scenario = strong positive
+
+
+def test_score_home_emotional_penalizes_moving_out_when_home_is_peaceful() -> None:
+    life = compute_life_state(
+        {"lives_with_parents": True, "home_emotional_cost": "peaceful"}
+    )
+    move_out = _make_scenario(moves_out=True)
+    score = _score_home_emotional(move_out, life)
+    assert score < 0  # peaceful home + move-out = mild negative
+
+
+def test_score_home_emotional_penalizes_staying_when_home_is_hard() -> None:
+    life = compute_life_state(
+        {"lives_with_parents": True, "home_emotional_cost": "hard"}
+    )
+    stay = _make_scenario(moves_out=False)
+    assert _score_home_emotional(stay, life) < -0.5
+
+
+def test_score_home_emotional_neutral_when_home_is_fine_and_staying() -> None:
+    life = compute_life_state(
+        {"lives_with_parents": True, "home_emotional_cost": "fine"}
+    )
+    stay = _make_scenario(moves_out=False)
+    assert _score_home_emotional(stay, life) == 0.0
+
+
+def test_score_recoverability_returns_expected_bands() -> None:
+    """Healthy buffer so the low-R penalty isn't compounded."""
+    life = compute_life_state(
+        {
+            "current_monthly_take_home": 2000,
+            "current_monthly_bills": 200,
+            "current_savings": 5000,  # buffer = 25 months → safe
+            "lives_with_parents": True,
+        }
+    )
+    assert _score_recoverability(_make_scenario(recoverability="high"), life) == 0.5
+    assert _score_recoverability(_make_scenario(recoverability="medium"), life) == 0.0
+    assert _score_recoverability(_make_scenario(recoverability="low"), life) == -0.5
+
+
+def test_score_recoverability_compounds_when_buffer_thin() -> None:
+    """Low-R + thin buffer = the danger combination → extra penalty."""
+    life = compute_life_state(
+        {
+            "current_monthly_take_home": 1000,
+            "current_monthly_bills": 800,
+            "current_savings": 800,  # buffer = 1.0 month → below MIN of 1.5
+            "lives_with_parents": True,
+        }
+    )
+    safe_buffer_low_r = -0.5
+    actual = _score_recoverability(_make_scenario(recoverability="low"), life)
+    assert actual < safe_buffer_low_r  # -0.5 * 1.5 = -0.75
+
+
+def test_scored_scenario_carries_recoverability_and_bucket() -> None:
+    pack = get_pack("transition-to-adulthood")
+    life = compute_life_state(_emma_answers())
+    s = next(x for x in pack.scenarios if x.id == "move_out_with_car")
+    scored = score_scenario(s, life, pack.weights)
+    assert scored.recoverability == "low"
+    assert scored.bucket == "fast_freedom"
 
 
 def test_no_income_zero_buffer_is_fragile() -> None:

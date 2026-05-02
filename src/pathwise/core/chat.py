@@ -117,6 +117,8 @@ This is the plan they're looking at right now. They may ask you to clarify, push
 - Be brief. Most replies should be 2-5 sentences. Lists only when they help.
 - If they're considering a tradeoff, do the math out loud with their real numbers from above. Don't make up new numbers.
 - If they push toward something the plan flagged as not-viable, name the specific failure (cash flow, buffer, time) and what would have to change for it to pencil.
+- If they push back on the recommended path, treat it as a signal that an assumption may be wrong — re-derive from their numbers and the falsifiability conditions in the essay; don't just defend the current recommendation.
+- When discussing a choice, name its recoverability in passing when relevant (e.g. "this one's easy to step back from" / "this one's hard to undo"). Recoverability is a real factor, not a footnote.
 - If they ask something the plan + research can't answer (e.g. "is X program any good?"), say what you do know, and tell them what they'd need to find out.
 - Use their first name occasionally, not every turn.
 """

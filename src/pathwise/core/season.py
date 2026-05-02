@@ -55,6 +55,12 @@ class Scenario:
     car: bool
     moves_out: bool
     income_growth: bool
+    # Per-decision recoverability — how easily a teen can reverse / repair / step
+    # back from the choice. Distinct from life-state fragility (which describes
+    # exposure to shocks). See build-independence.md §Recoverability.
+    recoverability: Literal["high", "medium", "low"] = "medium"
+    # Which named path this scenario belongs to in the user-facing plan output.
+    bucket: Literal["fast_freedom", "compounding_freedom", "skill_leverage"] = "skill_leverage"
 
 
 @dataclass

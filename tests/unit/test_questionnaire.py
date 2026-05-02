@@ -61,6 +61,13 @@ class TestCoerce:
         q = PACK.question("car_purpose")
         assert coerce_answer(q, "") is None
 
+    def test_home_emotional_cost_choices(self) -> None:
+        q = PACK.question("home_emotional_cost")
+        for choice in ("peaceful", "fine", "tense", "hard"):
+            assert coerce_answer(q, choice) == choice
+        with pytest.raises(AnswerValidationError):
+            coerce_answer(q, "miserable")
+
 
 class TestService:
     def test_set_then_get(self, store: FileStore) -> None:

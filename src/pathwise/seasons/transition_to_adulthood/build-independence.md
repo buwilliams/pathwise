@@ -80,6 +80,30 @@ $$
 
 This means moving out may feel like independence while reducing total practical freedom.
 
+### Home Emotional Cost
+
+Let:
+
+$$
+H = \text{home emotional cost}
+$$
+
+Staying with a parent reduces money pressure, but it is not emotionally free. Home can carry costs in privacy, autonomy, conflict, infantilization, commute, or family stress. These costs are real even when they do not appear on a balance sheet.
+
+The model should not treat the stay-home baseline as a costless reference point. $H$ is paid in reductions to $e$ (enjoyable life) and $s$ (stability / emotional safety), and sometimes in $g$ (goal progress) when home dynamics block momentum.
+
+This matters because $H$ changes when moving out becomes rational. When $H$ is low, the case for delaying move-out is strong. When $H$ is high enough, moving out can be the higher-momentum choice even when the financial picture is worse.
+
+In notation:
+
+$$
+i_3 \uparrow \text{ becomes rational as } H \text{ rises}
+$$
+
+Plain English:
+
+> Moving out can be the right move when home is emotionally costly enough that the cost of staying outweighs the cost of leaving.
+
 ### Time
 
 Let:
@@ -271,6 +295,30 @@ for each stage of the plan.
 Plain English:
 
 > No step should make life so fragile that a small mistake, emergency, repair, illness, or job disruption causes the whole plan to fail.
+
+### Recoverability
+
+Let:
+
+$$
+R = \text{recoverability}
+$$
+
+Recoverability measures how easily a teen can reverse, repair, or step back from a decision if it turns out badly. Trying a part-time job, taking a short course, or getting insurance quotes before buying are high-recoverability decisions. Signing a year lease they can barely afford, taking on high-interest debt, or buying a car that drains their emergency fund are low-recoverability decisions.
+
+Recoverability is distinct from fragility. Fragility describes how exposed a life-state is to shocks. Recoverability describes how easily a *specific decision* can be undone if it turns out wrong. A decision can be recoverable even when the resulting life-state is fragile (a short lease in a city they can leave) and irrecoverable even when the life-state looks safe (a long contract that locks in obligations).
+
+A plan should satisfy:
+
+$$
+R(s_j) \geq R_{min}
+$$
+
+for each step $j$ where the decision is large enough that an error would meaningfully change the path.
+
+Plain English:
+
+> Prefer decisions that can be stepped back from. Irreversible decisions need more evidence than reversible ones.
 
 ---
 
@@ -470,9 +518,15 @@ $$
 F(L_j) \leq F_{max} \quad \text{for each step } j
 $$
 
+and:
+
+$$
+R(s_j) \geq R_{min} \quad \text{for each large decision } j
+$$
+
 Plain English:
 
-> The best path is the path with the most positive momentum, ending in a desirable life-state, while keeping fragility below the danger threshold at each step.
+> The best path is the path with the most positive momentum, ending in a desirable life-state, while keeping fragility below the danger threshold at each step and ensuring large decisions remain recoverable.
 
 ### Independence Ladder
 
@@ -542,6 +596,37 @@ Plain English:
 This gives us the central criticism:
 
 > A move is not good merely because it increases one form of independence. A move is good when it increases total life momentum.
+
+### Falsifiability of the Working Conjecture
+
+The first working conjecture says: build mobility and financial independence before residential independence. This is a default, not a verdict. To prevent it from hardening into a foregone conclusion, the model should state what evidence would overturn it.
+
+What would make moving out sooner the right plan:
+
+- Rent is low enough that $c \geq 0$ at the stated work hours.
+- Risk buffer remains above $r_{min}$ after deposit and move-in costs.
+- Home emotional cost $H$ is high enough that staying degrades $e$, $s$, or $g$.
+- The roommate or housing arrangement is stable.
+- The lease is short or otherwise recoverable, so $R(\text{move-out}) \geq R_{min}$.
+- Income is stable enough to sustain rent without work hours that collapse productive time.
+
+What would make delaying move-out the right call:
+
+- Home emotional cost $H$ is tolerable.
+- Savings would grow meaningfully in the delay window.
+- A car or credential path during the delay would unlock higher income.
+- Available rent options would force $c < 0$ or $r < r_{min}$.
+- Current income is unstable.
+
+What would change our mind about the model itself:
+
+- A scenario produces high momentum but feels emotionally wrong to the teen. (A value is missing or mis-weighted.)
+- A scenario looks viable on paper but fails repeatedly in practice. (A constraint is uncosted.)
+- The teen's stated values shift in a stable, considered way. ($V$ needs updating.)
+
+Plain English:
+
+> The working conjecture should hold only as long as the conditions above hold. When they stop holding, the conjecture should be replaced.
 
 ---
 

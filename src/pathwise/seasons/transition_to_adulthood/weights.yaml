@@ -1,14 +1,23 @@
-# Momentum-score weights, taken directly from the suggested table in
-# emma-life-strategy-model.md §Momentum Score. Higher = more important.
+# Momentum-score weights, taken from the suggested table in
+# build-independence.md §Momentum Score, then extended for the v0.2.0 model
+# additions (Home emotional cost, Recoverability).
+#
+# Naming note: the essay uses lowercase `r` for risk buffer and uppercase `R`
+# for recoverability. Here we keep `r` = risk buffer (existing) and use `rec`
+# for recoverability so YAML keys stay unambiguous.
+#
 # Cash flow, risk buffer, and emotional stability are weighted highest because
-# when they collapse the whole life-state becomes fragile.
+# when they collapse the whole life-state becomes fragile. The new H and `rec`
+# weights (3) sit at Tier 2 — meaningful but not load-bearing.
 weights:
-  i: 2   # independence (composite)
-  n: 3   # positive net worth
-  e: 2   # enjoyable life
-  g: 3   # goal progress
-  s: 4   # stability / emotional safety
-  p: 2   # productive time
-  c: 4   # cash flow
-  r: 4   # risk buffer
-  y: 3   # income
+  i: 2     # independence (composite)
+  n: 3     # positive net worth
+  e: 2     # enjoyable life
+  g: 3     # goal progress
+  s: 4     # stability / emotional safety
+  p: 2     # productive time
+  c: 4     # cash flow
+  r: 4     # risk buffer
+  y: 3     # income
+  h: 3     # home emotional cost (penalize staying when home costs are high)
+  rec: 3   # recoverability (per-decision reversibility)

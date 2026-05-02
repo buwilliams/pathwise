@@ -1,7 +1,7 @@
 """Scenario simulation, viability filtering, and momentum scoring.
 
 Direct implementation of the formulas in
-``../buddy-williams-writings/fragments/emma-life-strategy-model.md`` §2.
+``seasons/transition_to_adulthood/build-independence.md`` §2.
 
 Each candidate scenario from the season pack is "instantiated" by combining
 the user's current life-state with a research bundle (real-world numbers
@@ -13,6 +13,14 @@ fetched at plan time). Then we apply:
 
 The wisdom (final plan synthesis) is done by the LLM — this layer's job
 is to filter and rank so the LLM is grounded in actual numbers.
+
+Scoring components (as of v0.2.0):
+    i, n, e, g, s, p, c, r, y      — original V/T/M/Y momentum components
+    h                              — home emotional cost (rewards moving out
+                                     when home is hard; penalizes staying)
+    rec                            — per-decision recoverability (rewards
+                                     reversible choices; penalizes irreversible
+                                     ones, especially when buffer is thin)
 """
 
 from __future__ import annotations
@@ -76,6 +84,11 @@ class ScoredScenario:
 
     # Per-component scores (transparency for the plan prompt)
     component_scores: dict[str, float]
+
+    # Per-decision metadata surfaced to the plan prompt so it can render
+    # path-specific tags (recoverability label, bucket grouping).
+    recoverability: str = "medium"  # high | medium | low
+    bucket: str = "skill_leverage"  # fast_freedom | compounding_freedom | skill_leverage
 
     # Pretty-printed deltas (for templates)
     @property
@@ -300,6 +313,36 @@ def _score_goals(scenario: Scenario, life: LifeState) -> float:
     return 0.0
 
 
+def _score_home_emotional(scenario: Scenario, life: LifeState) -> float:
+    """Reward moving out when home is hard; reward staying when home is fine.
+
+    The user's `home_emotional_cost` field is 0..3:
+        0.0  peaceful — home is a real asset; moving costs more than it gives
+        1.0  fine     — neutral
+        2.0  tense    — moving begins to look reasonable
+        3.0  hard     — staying actively damages enjoyment & stability
+    """
+    h = life.home_emotional_cost
+    if scenario.moves_out:
+        # Linear: hard home (3) → +1.0; peaceful home (0) → -0.5
+        return max(-1.0, min(1.0, (h - 1.0) / 2.0))
+    # Stay-home scenario
+    if h >= 2.0:
+        return -((h - 1.0) / 2.0)  # tense → -0.5, hard → -1.0
+    return 0.0
+
+
+def _score_recoverability(scenario: Scenario, life: LifeState) -> float:
+    """Reward reversible decisions; penalize irreversible ones, more so when
+    the user's buffer is already thin (low recoverability + thin buffer is
+    the danger combination the model wants to flag explicitly).
+    """
+    base = {"high": 0.5, "medium": 0.0, "low": -0.5}.get(scenario.recoverability, 0.0)
+    if scenario.recoverability == "low" and life.risk_buffer_months < MIN_RISK_BUFFER_MONTHS:
+        base *= 1.5  # thin buffer + irreversible decision = compounded danger
+    return max(-1.0, min(1.0, base))
+
+
 def _score_stability(state: dict[str, float], life: LifeState) -> float:
     if state["cash_flow"] < 0:
         return -1.0
@@ -336,6 +379,8 @@ def score_scenario(
         "c": _score_cash_flow(state, life),
         "r": _score_risk_buffer(state, life),
         "y": _score_income(state, life),
+        "h": _score_home_emotional(scenario, life),
+        "rec": _score_recoverability(scenario, life),
     }
 
     momentum = sum(weights.get(k, 0.0) * v for k, v in component_scores.items())
@@ -368,6 +413,8 @@ def score_scenario(
         time_delta_hours=state["productive_hours"] - life.productive_hours_per_week,
         income_delta=state["income"] - life.current_income_monthly,
         component_scores=component_scores,
+        recoverability=scenario.recoverability,
+        bucket=scenario.bucket,
     )
 
 

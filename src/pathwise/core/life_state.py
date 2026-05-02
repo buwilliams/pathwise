@@ -1,9 +1,15 @@
 """Pure functions: questionnaire answers → current life-state L.
 
 Direct encoding of the formal model in
-``../buddy-williams-writings/fragments/emma-life-strategy-model.md`` §1.
+``seasons/transition_to_adulthood/build-independence.md`` §1.
 
-L = {V, T, M, Y, K}
+L = {V, T, M, Y, K, H}
+
+H (home emotional cost) is sourced from the optional ``home_emotional_cost``
+question; staying home is not treated as a costless reference point.
+
+R (recoverability) lives on each scenario, not on the life-state — see
+``core/season.py:Scenario`` and ``core/momentum.py``.
 
 We only model the parts the questionnaire actually surfaces; what we don't
 have, we leave as None and the LLM is told to be transparent about it.
@@ -43,6 +49,10 @@ class LifeState:
     emergency_fund_floor: float
     monthly_pressure_comfort: str
     interested_in_training: bool
+
+    # Home emotional cost (H) — 0.0 (peaceful) → 3.0 (hard).
+    # Forced to 0.0 when the user doesn't live with family.
+    home_emotional_cost: float = 1.0
 
     # Derived qualitative bands for the plan prompt
     @property
@@ -88,11 +98,36 @@ def _str(answers: dict[str, Any], key: str, default: str | None = None) -> str |
     return str(v)
 
 
+_HOME_EMOTIONAL_COST_SCALE = {
+    "peaceful": 0.0,
+    "fine": 1.0,
+    "tense": 2.0,
+    "hard": 3.0,
+}
+
+
+def _home_emotional_cost(answers: dict[str, Any], lives_with_parents: bool) -> float:
+    """Map the optional ``home_emotional_cost`` answer onto a 0..3 scale.
+
+    Forced to 0.0 when the user doesn't live with family — there's no home
+    cost to pay if you've already moved out. Defaults to 1.0 (fine) when
+    the answer is missing so existing users without this answer don't get
+    penalized either way.
+    """
+    if not lives_with_parents:
+        return 0.0
+    raw = answers.get("home_emotional_cost")
+    if not raw:
+        return 1.0
+    return _HOME_EMOTIONAL_COST_SCALE.get(str(raw), 1.0)
+
+
 def compute_life_state(answers: dict[str, Any]) -> LifeState:
     income = _num(answers, "current_monthly_take_home")
     bills = _num(answers, "current_monthly_bills")
     savings = _num(answers, "current_savings")
     floor = _num(answers, "emergency_fund_floor")
+    lives_with_parents = _bool(answers, "lives_with_parents", True)
 
     # Treat current monthly obligations as bills (rent is captured separately
     # only when moving-out scenarios kick in).
@@ -116,8 +151,9 @@ def compute_life_state(answers: dict[str, Any]) -> LifeState:
         top_value=_str(answers, "top_value"),
         move_out_urgency=int(_num(answers, "move_out_urgency", 3)),
         has_car=_bool(answers, "has_car"),
-        lives_with_parents=_bool(answers, "lives_with_parents", True),
+        lives_with_parents=lives_with_parents,
         emergency_fund_floor=floor,
         monthly_pressure_comfort=_str(answers, "monthly_pressure_comfort", "mild") or "mild",
         interested_in_training=_bool(answers, "interested_in_training"),
+        home_emotional_cost=_home_emotional_cost(answers, lives_with_parents),
     )

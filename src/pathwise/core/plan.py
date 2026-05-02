@@ -120,6 +120,15 @@ def generate_plan(
     scored = score_all(pack.scenarios, life, pack.weights, research_bundle.data)
     logger.info("plan.generate scored %d scenarios", len(scored))
 
+    # Group scored scenarios by named path bucket for the three-paths output.
+    paths_by_bucket: dict[str, list[Any]] = {
+        "fast_freedom": [],
+        "compounding_freedom": [],
+        "skill_leverage": [],
+    }
+    for s in scored:
+        paths_by_bucket.setdefault(s.bucket, []).append(s)
+
     plan_prompt = render_template(
         pack.prompt_path("plan"),
         {
@@ -129,6 +138,7 @@ def generate_plan(
             "life_state": _life_state_view(life),
             "research_json": _pretty_json(research_bundle.data),
             "scored_scenarios": scored,
+            "paths_by_bucket": paths_by_bucket,
             "format_answer": _format_answer,
             "chat_context": chat_context or "",
         },
@@ -203,6 +213,9 @@ def generate_plan(
 # ---------------------------------------------------------------------------
 
 
+_HOME_EMOTIONAL_LABELS = {0.0: "peaceful", 1.0: "fine", 2.0: "tense", 3.0: "hard"}
+
+
 def _life_state_view(life: Any) -> dict[str, Any]:
     return {
         "cash_flow_monthly": round(life.cash_flow_monthly, 0),
@@ -219,6 +232,10 @@ def _life_state_view(life: Any) -> dict[str, Any]:
         "emergency_fund_floor": round(life.emergency_fund_floor, 0),
         "monthly_pressure_comfort": life.monthly_pressure_comfort,
         "interested_in_training": life.interested_in_training,
+        "home_emotional_cost": life.home_emotional_cost,
+        "home_emotional_label": _HOME_EMOTIONAL_LABELS.get(
+            life.home_emotional_cost, "fine"
+        ),
     }
 
 

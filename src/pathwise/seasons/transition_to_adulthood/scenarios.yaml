@@ -1,6 +1,12 @@
-# Candidate scenarios from emma-life-strategy-model.md §Candidate Scenarios.
+# Candidate scenarios from build-independence.md §Candidate Scenarios.
 # Concrete dollar figures get filled in at plan time from the research bundle
 # (local rent, used-car prices, certificate program tuition, etc.).
+#
+# Each scenario carries:
+#   recoverability — how easily the teen can step back from this decision
+#                    (high | medium | low). Per-decision; distinct from fragility.
+#   bucket         — which named path it belongs to in the plan output
+#                    (fast_freedom | compounding_freedom | skill_leverage).
 scenarios:
   - id: stay_no_car_save
     label: "Stay home, no car, save aggressively"
@@ -8,6 +14,8 @@ scenarios:
     car: false
     moves_out: false
     income_growth: false
+    recoverability: high
+    bucket: skill_leverage
 
   - id: stay_modest_car
     label: "Stay home, modest reliable car, preserve buffer"
@@ -15,6 +23,8 @@ scenarios:
     car: true
     moves_out: false
     income_growth: false
+    recoverability: medium
+    bucket: skill_leverage
 
   - id: move_out_with_car
     label: "Move out and buy a car"
@@ -22,6 +32,8 @@ scenarios:
     car: true
     moves_out: true
     income_growth: false
+    recoverability: low
+    bucket: fast_freedom
 
   - id: move_out_no_car
     label: "Move out, no car"
@@ -29,6 +41,8 @@ scenarios:
     car: false
     moves_out: true
     income_growth: false
+    recoverability: medium
+    bucket: fast_freedom
 
   - id: low_rent_modest_car_grow_income
     label: "Stay low-rent, modest car, grow income, move out later"
@@ -36,6 +50,8 @@ scenarios:
     car: true
     moves_out: false
     income_growth: true
+    recoverability: medium
+    bucket: compounding_freedom
 
   - id: work_more_save_more
     label: "Work more hours, save aggressively, delay car"
@@ -43,6 +59,8 @@ scenarios:
     car: false
     moves_out: false
     income_growth: false
+    recoverability: high
+    bucket: skill_leverage
 
   - id: train_for_better_income
     label: "Add training or school, delay apartment"
@@ -50,3 +68,5 @@ scenarios:
     car: false
     moves_out: false
     income_growth: true
+    recoverability: medium
+    bucket: skill_leverage
