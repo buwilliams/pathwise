@@ -28,7 +28,7 @@ def _empty_bundle() -> ResearchBundle:
 
 
 PHONE = "+12025550100"
-SEASON = "transition-to-adulthood"
+SEASON = "build-independence"
 
 
 @pytest.fixture

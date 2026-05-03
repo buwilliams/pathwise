@@ -1,5 +1,5 @@
 # Momentum-score weights, taken from the suggested table in
-# build-independence.md §Momentum Score.
+# model.md §Momentum Score.
 #
 # Per the essay: emotional cost (H) does NOT appear directly in the score.
 # Its effect flows through e (enjoyable), s (stability), and g (goal

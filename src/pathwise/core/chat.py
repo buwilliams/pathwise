@@ -48,15 +48,13 @@ def render_chat_for_prompt(turns: list["ChatTurn"], first_name: str) -> str:
 
 
 def _pack_model_essay(pack: SeasonPack) -> str:
-    """Load the season pack's life-strategy model essay if present.
+    """Load the season's formalized-conjecture markdown if present.
 
-    Each pack may bundle its own technical model as an *.md file at the pack
-    root (e.g. ``build-independence.md``). We use the first one we find.
+    Each revision bundles its model at ``model.md`` at the revision root.
     Returns an empty string if no essay is bundled.
     """
-    for path in sorted(pack.pack_dir.glob("*.md")):
-        return path.read_text()
-    return ""
+    path = pack.pack_dir / "model.md"
+    return path.read_text() if path.exists() else ""
 
 
 def _build_system_prompt(
@@ -153,8 +151,6 @@ class ChatService:
         if not user_text.strip():
             raise ChatError("Empty message.")
 
-        pack = get_pack(season_id)
-
         profile = ProfileService(self.store).get(user_id)
         if profile is None:
             raise ChatError(f"No profile for user_id={user_id}")
@@ -164,6 +160,13 @@ class ChatService:
             plan_text, plan_meta = read_plan(user_id, season_id, version, self.store)
         except Exception as exc:
             raise ChatError(f"Plan v{version} not found.") from exc
+
+        # Route to the same revision the plan was generated under, so the
+        # voice / system prompt / model essay match what the user has been
+        # reading. Falls back to latest only if a pre-revision plan slipped
+        # through the backfill.
+        plan_revision = plan_meta.get("pack_version")
+        pack = get_pack(season_id, revision=plan_revision)
 
         history = self.history(user_id, season_id, version)
         # Append the new user turn before calling so it's in-context
@@ -191,7 +194,12 @@ class ChatService:
         # if anything goes wrong between them.
         self.store.append_jsonl(
             path,
-            {"role": "user", "text": user_text.strip(), "at": now},
+            {
+                "role": "user",
+                "text": user_text.strip(),
+                "at": now,
+                "pack_version": pack.version,
+            },
         )
         assistant = ChatTurn(role="assistant", text=result.text, at=time.time())
         self.store.append_jsonl(
@@ -201,6 +209,7 @@ class ChatService:
                 "text": assistant.text,
                 "at": assistant.at,
                 "usage": result.usage,
+                "pack_version": pack.version,
             },
         )
         return assistant

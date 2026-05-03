@@ -398,6 +398,7 @@
         }
       },
       () => { location.hash = "#/season/" + seasonId; },
+      p.revision_status,
     ));
   }
 
@@ -430,6 +431,7 @@
           }
         }
       },
+      planRes.revision_status,
     ));
   }
 
@@ -447,7 +449,14 @@
         " · " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
     };
     show(views.planHistory(
-      list.versions.map(v => ({ version: v.version, date: fmt(v.generated_at) }))
+      seasonId,
+      list.versions.map(v => ({
+        version: v.version,
+        date: fmt(v.generated_at),
+        packVersion: v.pack_version,
+        chatMessages: v.chat_messages,
+      })),
+      list.latest_revision,
     ));
   }
 

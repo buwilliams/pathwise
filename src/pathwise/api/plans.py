@@ -13,6 +13,7 @@ from pathwise.core.plan import (
     read_plan,
     start_plan_job,
 )
+from pathwise.core.season import latest_revision
 
 router = APIRouter(prefix="/seasons/{season_id}/plans", tags=["plans"])
 
@@ -47,6 +48,10 @@ def status_endpoint(
 @router.get("")
 def index(season_id: str, store: StoreDep, user_id: CurrentUserId) -> dict[str, Any]:
     versions = list_plans(user_id, season_id, store)
+    try:
+        current_revision = latest_revision(season_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     enriched = []
     for v in versions:
         meta = store.read_json(store.plan_meta_path(user_id, season_id, v))
@@ -59,10 +64,11 @@ def index(season_id: str, store: StoreDep, user_id: CurrentUserId) -> dict[str, 
                 "version": v,
                 "generated_at": meta.get("generated_at"),
                 "model_plan": meta.get("model_plan"),
+                "pack_version": meta.get("pack_version"),
                 "chat_messages": chat_msgs,
             }
         )
-    return {"versions": enriched}
+    return {"versions": enriched, "latest_revision": current_revision}
 
 
 @router.get("/latest")
@@ -83,6 +89,25 @@ def show(
     return _read(season_id, version, store, user_id)
 
 
+def _revision_status(season_id: str, plan_revision: str | None) -> dict[str, Any]:
+    try:
+        current = latest_revision(season_id)
+    except KeyError:
+        current = None
+    return {
+        "plan_revision": plan_revision,
+        "latest_revision": current,
+        "newer_available": bool(
+            plan_revision and current and plan_revision != current
+        ),
+    }
+
+
 def _read(season_id: str, version: int, store: Any, user_id: str) -> dict[str, Any]:
     markdown, meta = read_plan(user_id, season_id, version, store)
-    return {"version": version, "markdown": markdown, "meta": meta}
+    return {
+        "version": version,
+        "markdown": markdown,
+        "meta": meta,
+        "revision_status": _revision_status(season_id, meta.get("pack_version")),
+    }

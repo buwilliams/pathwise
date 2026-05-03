@@ -127,9 +127,13 @@ class QuestionnaireService:
         current = self.get_answers(user_id, pack.id)
         current[key] = coerced
         self.store.write_json(self.store.answers_path(user_id, pack.id), current)
+        self.store.write_json(
+            self.store.answers_meta_path(user_id, pack.id),
+            {"pack_version": pack.version, "updated_at": now},
+        )
         self.store.append_jsonl(
             self.store.answers_history_path(user_id, pack.id),
-            {"at": now, "key": key, "value": coerced},
+            {"at": now, "key": key, "value": coerced, "pack_version": pack.version},
         )
         return coerced
 
@@ -151,10 +155,14 @@ class QuestionnaireService:
         current = self.get_answers(user_id, pack.id)
         current.update(coerced)
         self.store.write_json(self.store.answers_path(user_id, pack.id), current)
+        self.store.write_json(
+            self.store.answers_meta_path(user_id, pack.id),
+            {"pack_version": pack.version, "updated_at": now},
+        )
         for key, value in coerced.items():
             self.store.append_jsonl(
                 self.store.answers_history_path(user_id, pack.id),
-                {"at": now, "key": key, "value": value},
+                {"at": now, "key": key, "value": value, "pack_version": pack.version},
             )
         return current
 

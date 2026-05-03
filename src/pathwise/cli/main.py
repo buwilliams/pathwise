@@ -15,7 +15,12 @@ from pathwise.core.ids import normalize_phone, user_id_for_phone
 from pathwise.core.plan import PlanError, generate_plan, list_plans, read_plan
 from pathwise.core.profile import ProfileService
 from pathwise.core.questionnaire import AnswerValidationError, QuestionnaireService
-from pathwise.core.season import get_pack, list_packs, packs_root
+from pathwise.core.season import (
+    get_pack,
+    latest_revision,
+    list_packs,
+    list_revisions,
+)
 from pathwise.core.store import FileStore
 from pathwise.sms.factory import build_sms_sender
 
@@ -213,18 +218,26 @@ app.add_typer(season_app, name="season")
 
 @season_app.command("list")
 def season_list() -> None:
-    packs = list_packs(packs_root())
+    packs = list_packs()
     if not packs:
         typer.echo("(no packs found)")
         return
     for p in packs:
-        typer.echo(f"{p.id}\tv{p.version}\t{p.name}")
+        revs = list_revisions(p.id)
+        suffix = f" ({len(revs)} revisions)" if len(revs) > 1 else ""
+        typer.echo(f"{p.id}\tv{p.version}\t{p.name}{suffix}")
 
 
 @season_app.command("show")
-def season_show(season_id: Annotated[str, typer.Argument()]) -> None:
+def season_show(
+    season_id: Annotated[str, typer.Argument()],
+    revision: Annotated[
+        str | None,
+        typer.Option(help="Specific revision (defaults to latest)"),
+    ] = None,
+) -> None:
     try:
-        pack = get_pack(season_id)
+        pack = get_pack(season_id, revision=revision)
     except KeyError as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -234,6 +247,9 @@ def season_show(season_id: Annotated[str, typer.Argument()]) -> None:
             "name": pack.name,
             "summary": pack.summary,
             "version": pack.version,
+            "revision": pack.revision,
+            "available_revisions": list_revisions(pack.id),
+            "latest_revision": latest_revision(pack.id),
             "sections": [s.id for s in pack.sections],
             "question_count": len(pack.questions),
             "scenarios": [s.id for s in pack.scenarios],
@@ -252,7 +268,7 @@ app.add_typer(question_app, name="question")
 
 @question_app.command("list")
 def question_list(
-    season: Annotated[str, typer.Option(help="Season id")] = "transition-to-adulthood",
+    season: Annotated[str, typer.Option(help="Season id")] = "build-independence",
     keys_only: Annotated[bool, typer.Option("--keys-only")] = False,
 ) -> None:
     pack = get_pack(season)
@@ -276,7 +292,7 @@ def _resolve_user_id(phone: str) -> str:
 @answer_app.command("show")
 def answer_show(
     phone: Annotated[str, typer.Option()],
-    season: Annotated[str, typer.Option()] = "transition-to-adulthood",
+    season: Annotated[str, typer.Option()] = "build-independence",
 ) -> None:
     pack = get_pack(season)
     qs = QuestionnaireService(_store())
@@ -302,7 +318,7 @@ def answer_set(
     phone: Annotated[str, typer.Option()],
     key: Annotated[str, typer.Option()],
     value: Annotated[str, typer.Option(help="Raw value (string, will be coerced)")],
-    season: Annotated[str, typer.Option()] = "transition-to-adulthood",
+    season: Annotated[str, typer.Option()] = "build-independence",
 ) -> None:
     pack = get_pack(season)
     qs = QuestionnaireService(_store())
@@ -326,7 +342,7 @@ app.add_typer(plan_app, name="plan")
 @plan_app.command("generate")
 def plan_generate(
     phone: Annotated[str, typer.Option()],
-    season: Annotated[str, typer.Option()] = "transition-to-adulthood",
+    season: Annotated[str, typer.Option()] = "build-independence",
     skip_research: Annotated[
         bool,
         typer.Option(
@@ -352,7 +368,7 @@ def plan_generate(
 @plan_app.command("list")
 def plan_list(
     phone: Annotated[str, typer.Option()],
-    season: Annotated[str, typer.Option()] = "transition-to-adulthood",
+    season: Annotated[str, typer.Option()] = "build-independence",
 ) -> None:
     user_id = _resolve_user_id(phone)
     versions = list_plans(user_id, season, _store())
@@ -367,7 +383,7 @@ def plan_list(
 def plan_show(
     phone: Annotated[str, typer.Option()],
     version: Annotated[int, typer.Option()] = 0,
-    season: Annotated[str, typer.Option()] = "transition-to-adulthood",
+    season: Annotated[str, typer.Option()] = "build-independence",
     meta: Annotated[bool, typer.Option("--meta", help="Print metadata JSON instead of the markdown plan")] = False,
 ) -> None:
     user_id = _resolve_user_id(phone)

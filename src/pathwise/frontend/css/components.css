@@ -565,3 +565,38 @@
 .plan-list a:hover { border-color: var(--terracotta); color: var(--ink); }
 .plan-list .plan-version { font-weight: 500; }
 .plan-list .plan-date { color: var(--ink-mute); font-size: 0.9rem; }
+
+/* ───────── Revision indicators ───────── */
+.revision-banner {
+  margin: 0 0 var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  background: #FCF5EE;
+  border: 1.5px solid var(--terracotta-soft);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.revision-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--terracotta-soft);
+  color: var(--paper);
+  font-weight: 600;
+}
+.plan-version-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  margin-left: var(--space-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--cream-soft);
+  color: var(--ink-mute);
+}
+.plan-version-pill-stale {
+  background: var(--terracotta-soft);
+  color: var(--paper);
+}

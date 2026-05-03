@@ -124,7 +124,10 @@ def generate_plan(
         # Cache the research bundle for transparency / debugging
         ts = time.strftime("%Y-%m-%dT%H-%M-%S")
         research_path = store.research_dir(user_id, pack.id) / f"{ts}.json"
-        store.write_json(research_path, research_bundle.to_json())
+        store.write_json(
+            research_path,
+            {**research_bundle.to_json(), "pack_version": pack.version},
+        )
     elif research_bundle is None:
         logger.info("plan.generate skipping research (skip_research=True)")
         research_bundle = ResearchBundle(data={}, sources=[], raw_text="", usage={})
@@ -204,6 +207,7 @@ def generate_plan(
             "at": time.time(),
             "season_id": pack.id,
             "version": version,
+            "pack_version": pack.version,
         },
     )
     logger.info(
@@ -281,6 +285,7 @@ def _record_failure(
     started: float,
     error: str,
     chat_context: bool = False,
+    pack_version: str | None = None,
 ) -> None:
     store.append_jsonl(
         jobs_log_path,
@@ -290,6 +295,7 @@ def _record_failure(
             "status": "failed",
             "error": error,
             "from_chat": chat_context,
+            "pack_version": pack_version,
         },
     )
 
@@ -309,6 +315,7 @@ def _clear_stale_lock(
         started=existing.get("started_at", time.time()),
         error="Server appears to have crashed mid-job (lock file is stale).",
         chat_context=bool(existing.get("from_chat")),
+        pack_version=existing.get("pack_version"),
     )
     lock_path.unlink(missing_ok=True)
 
@@ -323,6 +330,7 @@ def _run_plan_job(
     lock_path: Any,
     jobs_log_path: Any,
     started: float,
+    pack_version: str,
 ) -> None:
     """Worker thread body. Runs synchronously; success removes the lock and
     appends a success record. Any exception is caught + recorded so the
@@ -343,6 +351,7 @@ def _run_plan_job(
                 "status": "succeeded",
                 "version": result.version,
                 "from_chat": chat_context is not None,
+                "pack_version": pack_version,
             },
         )
     except Exception as exc:
@@ -353,6 +362,7 @@ def _run_plan_job(
             started=started,
             error=str(exc),
             chat_context=chat_context is not None,
+            pack_version=pack_version,
         )
     finally:
         lock_path.unlink(missing_ok=True)
@@ -374,6 +384,11 @@ def start_plan_job(
     lock_path = store.plan_job_lock_path(user_id, season_id)
     jobs_log_path = store.plan_jobs_log_path(user_id, season_id)
 
+    # Resolve the pack revision *now* so the in-flight job is pinned to a
+    # specific revision even if the registry's `latest` changes mid-run.
+    pack = get_pack(season_id)
+    pack_version = pack.version
+
     existing = store.read_json(lock_path)
     if existing:
         age = time.time() - existing.get("started_at", 0)
@@ -394,6 +409,7 @@ def start_plan_job(
             "started_at": started,
             "season_id": season_id,
             "from_chat": chat_context is not None,
+            "pack_version": pack_version,
         },
     )
 
@@ -408,6 +424,7 @@ def start_plan_job(
             "lock_path": lock_path,
             "jobs_log_path": jobs_log_path,
             "started": started,
+            "pack_version": pack_version,
         },
         daemon=True,
         name=f"plan-job-{user_id[:8]}-{season_id}",
@@ -417,6 +434,7 @@ def start_plan_job(
         "started_at": started,
         "season_id": season_id,
         "from_chat": chat_context is not None,
+        "pack_version": pack_version,
     }
 
 

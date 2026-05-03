@@ -11,7 +11,7 @@ from pathwise.core.season import get_pack
 from pathwise.core.store import FileStore
 
 UID = "abcdef0123456789abcdef0123456789"
-PACK = get_pack("transition-to-adulthood")
+PACK = get_pack("build-independence")
 
 
 class TestCoerce:

@@ -1,7 +1,7 @@
 """Pure functions: questionnaire answers → current life-state L.
 
 Direct encoding of the formal model in
-``seasons/transition_to_adulthood/build-independence.md`` §1.
+``seasons/build_independence/revisions/v0_3_0/model.md`` §1.
 
 L = {V, T, M, Y, K, H}
 

@@ -28,7 +28,7 @@ def setup(tmp_path: Path):
         gender="female",
         zip_code="30301",
     )
-    pack = get_pack("transition-to-adulthood")
+    pack = get_pack("build-independence")
     qs = QuestionnaireService(store)
     # Fill every required key with a sensible value
     answers = {
@@ -64,7 +64,7 @@ def test_generate_plan_with_mocked_llm(setup) -> None:
         )
         result = generate_plan(
             user_id=profile.user_id,
-            season_id="transition-to-adulthood",
+            season_id="build-independence",
             store=store,
             settings=settings,
             skip_research=True,
@@ -82,13 +82,13 @@ def test_generate_plan_with_mocked_llm(setup) -> None:
         )
         r2 = generate_plan(
             user_id=profile.user_id,
-            season_id="transition-to-adulthood",
+            season_id="build-independence",
             store=store,
             settings=settings,
             skip_research=True,
         )
     assert r2.version == 2
-    assert list_plans(profile.user_id, "transition-to-adulthood", store) == [1, 2]
+    assert list_plans(profile.user_id, "build-independence", store) == [1, 2]
 
 
 def test_meta_records_scenarios_and_life_state(setup) -> None:
@@ -99,12 +99,12 @@ def test_meta_records_scenarios_and_life_state(setup) -> None:
         )
         generate_plan(
             user_id=profile.user_id,
-            season_id="transition-to-adulthood",
+            season_id="build-independence",
             store=store,
             settings=settings,
             skip_research=True,
         )
-    text, meta = read_plan(profile.user_id, "transition-to-adulthood", 1, store)
+    text, meta = read_plan(profile.user_id, "build-independence", 1, store)
     assert text == "# plan\n"
     assert meta["model_plan"] == "claude-opus-4-7"
     assert meta["life_state"]["cash_flow_monthly"] == 1550
@@ -117,12 +117,12 @@ def test_meta_records_scenarios_and_life_state(setup) -> None:
 def test_incomplete_questionnaire_rejected(setup) -> None:
     settings, store, profile = setup
     # Wipe required answers
-    store.write_json(store.answers_path(profile.user_id, "transition-to-adulthood"), {})
+    store.write_json(store.answers_path(profile.user_id, "build-independence"), {})
 
     with pytest.raises(PlanError) as exc_info:
         generate_plan(
             user_id=profile.user_id,
-            season_id="transition-to-adulthood",
+            season_id="build-independence",
             store=store,
             settings=settings,
             skip_research=True,
@@ -153,7 +153,7 @@ def test_plans_index_endpoint_returns_enriched_versions(setup, tmp_path) -> None
             )
             generate_plan(
                 user_id=profile.user_id,
-                season_id="transition-to-adulthood",
+                season_id="build-independence",
                 store=store,
                 settings=settings,
                 skip_research=True,
@@ -174,7 +174,7 @@ def test_plans_index_endpoint_returns_enriched_versions(setup, tmp_path) -> None
     ]
 
     r = client.get(
-        "/seasons/transition-to-adulthood/plans",
+        "/seasons/build-independence/plans",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert r.status_code == 200
@@ -201,7 +201,7 @@ def test_plan_prompt_renders_with_full_context(setup) -> None:
     with patch("pathwise.core.plan.call_plain", side_effect=fake_call):
         generate_plan(
             user_id=profile.user_id,
-            season_id="transition-to-adulthood",
+            season_id="build-independence",
             store=store,
             settings=settings,
             skip_research=True,

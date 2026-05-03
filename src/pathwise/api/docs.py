@@ -2,9 +2,10 @@
 
 Surfaces markdown documents from two places:
 
-1. Per-season-pack model essays — any ``*.md`` directly under a season pack's
-   root directory (e.g. ``seasons/transition_to_adulthood/build-independence.md``).
-   These describe the thinking and math behind that season's planner.
+1. Per-season-pack model essays — any ``*.md`` directly under the *latest*
+   revision of a season pack (e.g.
+   ``seasons/build_independence/revisions/v0_3_0/model.md``). These describe
+   the thinking and math behind that season's planner.
 2. A repo-level ``docs/`` directory (optional) — for cross-cutting docs that
    don't belong to any single season.
 
@@ -20,7 +21,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 
 from pathwise.api.deps import CurrentUserId
-from pathwise.core.season import list_packs, packs_root
+from pathwise.core.season import list_packs
 
 router = APIRouter(prefix="/technical", tags=["technical"])
 
@@ -48,7 +49,7 @@ def _title_from_markdown(text: str, fallback: str) -> str:
 def _all_doc_paths() -> dict[str, Path]:
     """Collect available docs as ``{slug: path}``. docs/ wins on slug clash."""
     paths: dict[str, Path] = {}
-    for pack in list_packs(packs_root()):
+    for pack in list_packs():
         for p in sorted(pack.pack_dir.glob("*.md")):
             paths.setdefault(p.stem, p)
     docs_dir = _docs_dir()

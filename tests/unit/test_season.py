@@ -1,11 +1,18 @@
 from __future__ import annotations
 
-from pathwise.core.season import get_pack, list_packs, packs_root
+import pytest
+
+from pathwise.core.season import (
+    get_pack,
+    latest_revision,
+    list_packs,
+    list_revisions,
+)
 
 
 def test_default_pack_loads() -> None:
-    pack = get_pack("transition-to-adulthood")
-    assert pack.id == "transition-to-adulthood"
+    pack = get_pack("build-independence")
+    assert pack.id == "build-independence"
     assert pack.name
     assert pack.summary
     assert pack.questions
@@ -15,7 +22,7 @@ def test_default_pack_loads() -> None:
 
 
 def test_questions_have_required_fields() -> None:
-    pack = get_pack("transition-to-adulthood")
+    pack = get_pack("build-independence")
     keys = pack.question_keys()
     assert len(keys) == len(set(keys)), "duplicate question keys"
     for q in pack.questions:
@@ -27,9 +34,9 @@ def test_questions_have_required_fields() -> None:
 
 
 def test_scenarios_match_model() -> None:
-    pack = get_pack("transition-to-adulthood")
+    pack = get_pack("build-independence")
     ids = {s.id for s in pack.scenarios}
-    # The 7 scenarios from emma-life-strategy-model.md §Candidate Scenarios
+    # The 7 scenarios from model.md §Candidate Scenarios
     expected = {
         "stay_no_car_save",
         "stay_modest_car",
@@ -43,12 +50,31 @@ def test_scenarios_match_model() -> None:
 
 
 def test_prompts_exist() -> None:
-    pack = get_pack("transition-to-adulthood")
+    pack = get_pack("build-independence")
     for name in ("system", "research", "plan"):
         assert pack.prompt_path(name).exists(), f"missing prompts/{name}.md"
 
 
 def test_list_packs_finds_default() -> None:
-    packs = list_packs(packs_root())
+    packs = list_packs()
     ids = {p.id for p in packs}
-    assert "transition-to-adulthood" in ids
+    assert "build-independence" in ids
+
+
+def test_revision_api() -> None:
+    revs = list_revisions("build-independence")
+    assert "0.3.0" in revs
+    assert latest_revision("build-independence") == "0.3.0"
+    pack = get_pack("build-independence", revision="0.3.0")
+    assert pack.revision == "0.3.0"
+    assert pack.version == "0.3.0"
+
+
+def test_unknown_revision_raises() -> None:
+    with pytest.raises(KeyError):
+        get_pack("build-independence", revision="9.9.9")
+
+
+def test_unknown_season_raises() -> None:
+    with pytest.raises(KeyError):
+        get_pack("nonexistent-season")

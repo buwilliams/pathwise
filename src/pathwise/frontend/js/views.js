@@ -179,11 +179,16 @@ const views = (() => {
           (s.chat_count ? ` · ${s.chat_count} conversation${s.chat_count === 1 ? "" : "s"}` : "")
         : "No plan yet — finish answering to generate one";
 
+      const head = el("div", { class: "season-row-head" },
+        el("span", { class: "season-row-name" }, s.name),
+        el("span", { class: "season-row-age" }, formatAge(s)),
+      );
+      if (s.newer_revision_available) {
+        head.appendChild(el("span", { class: "revision-pill" }, "season updated"));
+      }
+
       const node = el("a", { class: "season-row", href: linkTarget },
-        el("div", { class: "season-row-head" },
-          el("span", { class: "season-row-name" }, s.name),
-          el("span", { class: "season-row-age" }, formatAge(s)),
-        ),
+        head,
         el("p", { class: "season-row-meta" }, meta),
       );
       if (s.last_error) {
@@ -492,9 +497,18 @@ const views = (() => {
   }
 
   // ───────── Plan ─────────
-  function plan(profile, seasonId, planText, sources, version, totalVersions, onRegenerate, onRevise) {
+  function revisionBanner(revisionStatus) {
+    if (!revisionStatus || !revisionStatus.newer_available) return null;
+    return el("div", { class: "revision-banner", role: "status" },
+      `A newer version of this season is available (v${revisionStatus.latest_revision}). ` +
+      `Generating a new plan will use the new version.`,
+    );
+  }
+
+  function plan(profile, seasonId, planText, sources, version, totalVersions, onRegenerate, onRevise, revisionStatus) {
     const html = md.render(planText);
     return el("div", {},
+      revisionBanner(revisionStatus),
       el("div", { class: "plan-content", html }),
       sources && sources.length ? el("details", { class: "sources" },
         el("summary", {}, `Sources (${sources.length})`),
@@ -506,17 +520,21 @@ const views = (() => {
         el("button", { class: "btn", onclick: onRegenerate }, "Generate a new version"),
       ),
       el("p", { class: "progress-label" },
-        `Plan v${version}` + (totalVersions > 1 ? ` of ${totalVersions} — ` : ""),
+        `Plan v${version}` +
+          (revisionStatus && revisionStatus.plan_revision ? ` · pack v${revisionStatus.plan_revision}` : "") +
+          (totalVersions > 1 ? ` of ${totalVersions} — ` : ""),
         totalVersions > 1 ? el("a", { href: `#/season/${seasonId}/plans` }, "view all versions") : null,
       ),
     );
   }
 
   // ───────── Chat ─────────
-  function chat(profile, seasonId, version, initialTurns, planMarkdown, onSend, onRegenerate) {
+  function chat(profile, seasonId, version, initialTurns, planMarkdown, onSend, onRegenerate, revisionStatus) {
     const root = el("div", {});
     let userTurnCount = 0;
     let regenBtn;  // assigned later; guarded inside appendTurn
+    const banner = revisionBanner(revisionStatus);
+    if (banner) root.appendChild(banner);
     root.appendChild(card(
       el("h2", {}, `Talk it through`),
       el("p", { class: "lede" },
@@ -715,10 +733,10 @@ const views = (() => {
   }
 
   // ───────── Plan history (versions list, single season) ─────────
-  function planHistory(seasonId, seasonName, versions) {
+  function planHistory(seasonId, versions, latestRevision) {
     return el("div", {},
       card(
-        el("h2", {}, `${seasonName} — plan history`),
+        el("h2", {}, "Plan history"),
         el("p", { class: "lede" },
           versions.length === 1
             ? "One plan so far. As you revise your answers and regenerate, every version stays here so you can see how your thinking has shifted."
@@ -726,12 +744,18 @@ const views = (() => {
         ),
         el("div", { class: "plan-list" },
           ...[...versions].reverse().map(v => {
-            const row = el("a", { href: `#/season/${seasonId}/plan/${v.version}`, class: "plan-row" },
-              el("div", { class: "plan-row-main" },
-                el("span", { class: "plan-version" }, `Plan v${v.version}`),
-                el("span", { class: "plan-date" }, v.date),
-              ),
+            const main = el("div", { class: "plan-row-main" },
+              el("span", { class: "plan-version" }, `Plan v${v.version}`),
+              el("span", { class: "plan-date" }, v.date),
             );
+            if (v.packVersion) {
+              const pill = el("span", { class: "plan-version-pill" }, `pack v${v.packVersion}`);
+              if (latestRevision && v.packVersion !== latestRevision) {
+                pill.classList.add("plan-version-pill-stale");
+              }
+              main.appendChild(pill);
+            }
+            const row = el("a", { href: `#/season/${seasonId}/plan/${v.version}`, class: "plan-row" }, main);
             if (v.chatMessages > 0) {
               row.appendChild(el("a", {
                 class: "plan-chat-link",

@@ -122,6 +122,9 @@ class FileStore:
     def answers_path(self, user_id: str, season_id: str) -> Path:
         return self.season_dir(user_id, season_id) / "answers.json"
 
+    def answers_meta_path(self, user_id: str, season_id: str) -> Path:
+        return self.season_dir(user_id, season_id) / "answers.meta.json"
+
     def answers_history_path(self, user_id: str, season_id: str) -> Path:
         return self.season_dir(user_id, season_id) / "answers.history.jsonl"
 

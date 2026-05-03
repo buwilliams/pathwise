@@ -106,11 +106,11 @@ def my_seasons(
     """
     from pathwise.api.deps import get_store
     from pathwise.core.plan import plan_job_status
-    from pathwise.core.season import list_packs, packs_root
+    from pathwise.core.season import list_packs
 
     store = get_store()
     out = []
-    for pack in list_packs(packs_root()):
+    for pack in list_packs():
         versions = store.list_plan_versions(user_id, pack.id)
         job = plan_job_status(user_id, pack.id, store)
         # Surface seasons the user has touched in any way — completed plans
@@ -122,6 +122,7 @@ def my_seasons(
             if versions
             else {}
         )
+        latest_plan_revision = latest_meta.get("pack_version")
         chat_versions = sum(
             1
             for v in versions
@@ -137,6 +138,11 @@ def my_seasons(
                 "plan_count": len(versions),
                 "latest_version": versions[-1] if versions else None,
                 "latest_at": latest_meta.get("generated_at"),
+                "latest_plan_revision": latest_plan_revision,
+                "latest_revision": pack.revision,
+                "newer_revision_available": bool(
+                    latest_plan_revision and latest_plan_revision != pack.revision
+                ),
                 "chat_count": chat_versions,
                 "generating": job["generating"],
                 "started_at": job.get("started_at"),

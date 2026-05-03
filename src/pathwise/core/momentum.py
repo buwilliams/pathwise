@@ -1,7 +1,7 @@
 """Scenario simulation, viability filtering, and momentum scoring.
 
 Direct implementation of the formulas in
-``seasons/transition_to_adulthood/build-independence.md`` §2.
+``seasons/build_independence/revisions/v0_3_0/model.md`` §2.
 
 Each candidate scenario from the season pack is "instantiated" by combining
 the user's current life-state with a research bundle (real-world numbers
@@ -323,7 +323,7 @@ def _score_goals(scenario: Scenario, life: LifeState) -> float:
 
 
 def _scenario_H(scenario: Scenario, life: LifeState) -> float:
-    """Per-scenario emotional cost in 0..3, per build-independence.md §Emotional Cost.
+    """Per-scenario emotional cost in 0..3, per model.md §Emotional Cost.
 
     H is the cost paid by *this specific scenario*, not just by the home situation.
     It accumulates across the emotionally-loaded commitments the scenario implies:
