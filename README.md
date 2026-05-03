@@ -12,12 +12,12 @@ Pathwise grew out of the essay [**Emma: Build Independence**](https://github.com
 
 - **Season** — a life chapter the planner is built for. Each season has its own questions, scenarios, scoring weights, and prompts. Today: `build-independence` (ages 17–20). Later: marriage, kids, complex finances.
 - **Revision** — a versioned snapshot of a season under `revisions/v<X>_<Y>_<Z>/`. The revision directory is self-contained: `pack.toml`, `questionnaire.json`, `weights.yaml`, `scenarios.yaml`, `prompts/*.md`, `model.md`, and a `logic.py`. New plans always use the latest revision; existing user data stays pinned to whichever revision produced it.
-- **Model** (`model.md`) — the formalized conjecture for that revision. Math, definitions, and tradeoffs. The deterministic core (`life_state.py`, `momentum.py`) operationalizes it.
+- **Model** (`model.md`) — the formalized conjecture for that revision. Math, definitions, and tradeoffs. The deterministic core operationalizes it.
 - **Questionnaire** (`questionnaire.json`) — a JSON schema with three concerns kept separate: `data_model` (durable contract with the core), `questions` (prompt + UI presentation per field), and `steps` (ordered groups for the wizard). `when` predicates conditionally hide steps and questions based on prior answers. The frontend renders the wizard entirely from this schema.
 
 ## What's here
 
-- **Deterministic core** (`src/pathwise/core/`) — pure-Python math for life-state, viability, momentum, fragility; predicate evaluator; questionnaire schema and service.
+- **Deterministic core** (`src/pathwise/core/`) — pure-Python math that operationalizes each season's model; predicate evaluator; questionnaire schema and service.
 - **Season packs** (`src/pathwise/seasons/`) — one directory per season; revisions live under it.
 - **LLM layer** (`src/pathwise/llm/`) — Claude does grounded research (`web_search`) and final plan synthesis.
 - **Surfaces** — FastAPI (`src/pathwise/api/`), Typer CLI (`src/pathwise/cli/`), vanilla ES6 frontend (`src/pathwise/frontend/`), SMS via Twilio (`src/pathwise/sms/`).
