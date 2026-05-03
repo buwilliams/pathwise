@@ -8,6 +8,7 @@ from pathwise.api.deps import CurrentUserId, StoreDep
 from pathwise.core.plan import (
     PlanError,
     PlanJobAlreadyRunning,
+    QuestionnaireIncomplete,
     list_plans,
     plan_job_status,
     read_plan,
@@ -32,6 +33,15 @@ def create(
         )
     except PlanJobAlreadyRunning as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except QuestionnaireIncomplete as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": exc.code,
+                "message": str(exc),
+                "missing_required": exc.missing_required,
+            },
+        ) from exc
     except PlanError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

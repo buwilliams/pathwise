@@ -10,7 +10,12 @@ from fastapi import status
 
 from pathwise.api.deps import CurrentUserId, StoreDep
 from pathwise.core.chat import ChatError, ChatService, render_chat_for_prompt
-from pathwise.core.plan import PlanError, PlanJobAlreadyRunning, start_plan_job
+from pathwise.core.plan import (
+    PlanError,
+    PlanJobAlreadyRunning,
+    QuestionnaireIncomplete,
+    start_plan_job,
+)
 from pathwise.core.profile import ProfileService
 
 router = APIRouter(
@@ -87,5 +92,14 @@ def regenerate(
         )
     except PlanJobAlreadyRunning as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except QuestionnaireIncomplete as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": exc.code,
+                "message": str(exc),
+                "missing_required": exc.missing_required,
+            },
+        ) from exc
     except PlanError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

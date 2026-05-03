@@ -25,9 +25,14 @@ const api = (() => {
     let payload = null;
     try { payload = await res.json(); } catch (_) {}
     if (!res.ok) {
-      const err = new Error((payload && payload.detail) || `HTTP ${res.status}`);
+      // FastAPI may return detail as a string OR a structured object
+      // (e.g. {code, message, ...}). Pull a useful message either way.
+      const detail = payload && payload.detail;
+      const message = (detail && typeof detail === "object" ? detail.message : detail) || `HTTP ${res.status}`;
+      const err = new Error(message);
       err.status = res.status;
       err.payload = payload;
+      err.code = detail && typeof detail === "object" ? detail.code : null;
       throw err;
     }
     return payload;

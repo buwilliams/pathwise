@@ -171,9 +171,14 @@ const views = (() => {
         return card;
       }
 
-      const linkTarget = s.latest_version
-        ? `#/season/${s.season_id}/plan`
-        : `#/season/${s.season_id}`;
+      // When the last attempt failed because new questions were added in
+      // a season revision, treat the failure specially: link to the
+      // questionnaire (not the plan) and show a friendlier explanation.
+      const needsQuestionnaireUpdate = s.last_error_code === "questionnaire_incomplete";
+
+      const linkTarget = needsQuestionnaireUpdate
+        ? `#/season/${s.season_id}`
+        : (s.latest_version ? `#/season/${s.season_id}/plan` : `#/season/${s.season_id}`);
       const meta = s.latest_version
         ? `${s.plan_count} plan${s.plan_count === 1 ? "" : "s"} · last updated ${fmtDate(s.latest_at)}` +
           (s.chat_count ? ` · ${s.chat_count} conversation${s.chat_count === 1 ? "" : "s"}` : "")
@@ -183,7 +188,7 @@ const views = (() => {
         el("span", { class: "season-row-name" }, s.name),
         el("span", { class: "season-row-age" }, formatAge(s)),
       );
-      if (s.newer_revision_available) {
+      if (s.newer_revision_available || needsQuestionnaireUpdate) {
         head.appendChild(el("span", { class: "revision-pill" }, "season updated"));
       }
 
@@ -191,7 +196,11 @@ const views = (() => {
         head,
         el("p", { class: "season-row-meta" }, meta),
       );
-      if (s.last_error) {
+      if (needsQuestionnaireUpdate) {
+        node.appendChild(el("p", { class: "season-row-notice" },
+          "New questions were added since your last plan. Your previous answers are kept — tap to fill in the new ones.",
+        ));
+      } else if (s.last_error) {
         node.appendChild(el("p", { class: "season-row-error" },
           `Last attempt failed: ${s.last_error}`,
         ));
@@ -312,6 +321,10 @@ const views = (() => {
     }
 
     let currentIdx = 0;
+    // Track the last index we actually rendered so re-renders triggered by
+    // answer changes (for conditional `when` re-evaluation) don't yank the
+    // page to the top. Only step navigation should scroll.
+    let lastRenderedIdx = -1;
 
     const stepLabel = el("p", { class: "progress-label", style: "margin-bottom: var(--space-2);" }, "");
     const progressBar = el("span", { style: `width: ${currentPct}%` });
@@ -382,7 +395,12 @@ const views = (() => {
       }, backBtn, primaryBtn);
 
       body.replaceChildren(sectionEl, nav);
-      window.scrollTo({ top: 0, behavior: "instant" });
+      // Only scroll on actual step navigation (Next / Back / first render),
+      // not on the within-step re-render triggered by an answer change.
+      if (currentIdx !== lastRenderedIdx) {
+        window.scrollTo({ top: 0, behavior: "instant" });
+      }
+      lastRenderedIdx = currentIdx;
     }
 
     renderStep();

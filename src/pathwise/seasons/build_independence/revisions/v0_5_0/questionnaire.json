@@ -525,20 +525,22 @@
 
   "steps": [
     {
-      "id": "wants",
-      "title": "What you're considering",
+      "id": "wants_daily_life",
+      "title": "Daily life — where you live, how you move",
       "blurb": "Pick anything that's on the table. We'll only ask follow-up questions about the things you're actually thinking about.",
-      "questions": [
-        "wants_mobility",
-        "wants_housing",
-        "wants_education",
-        "wants_work",
-        "wants_relationships",
-        "wants_place",
-        "wants_health",
-        "wants_money_goals",
-        "wants_lifestyle"
-      ]
+      "questions": ["wants_housing", "wants_mobility", "wants_place"]
+    },
+    {
+      "id": "wants_work_money",
+      "title": "What you'll work on",
+      "blurb": "Education, work, and what you're saving for.",
+      "questions": ["wants_education", "wants_work", "wants_money_goals"]
+    },
+    {
+      "id": "wants_people_self",
+      "title": "People and self",
+      "blurb": "The relationships and life investments you're thinking about.",
+      "questions": ["wants_relationships", "wants_health", "wants_lifestyle"]
     },
     {
       "id": "now",

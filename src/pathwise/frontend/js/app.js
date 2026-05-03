@@ -20,6 +20,26 @@
     window.scrollTo({ top: 0, behavior: "instant" });
   }
 
+  // Shared handler for the three plan-generation entry points (questionnaire,
+  // plan view, chat regenerate). Routes the user back to the questionnaire
+  // when their stored answers are missing required keys for the current
+  // revision — e.g. after a season revision adds new fields.
+  function handleGenerateError(e, seasonId) {
+    if (e.status === 409) {
+      views.toast("A plan is already being generated for this season.", "error");
+      location.hash = "#/";
+      return true;
+    }
+    if (e.status === 400 && e.code === "questionnaire_incomplete") {
+      views.toast(
+        "We added new questions since your last plan. Your previous answers are kept — fill in the new ones to continue.",
+      );
+      location.hash = `#/season/${seasonId}`;
+      return true;
+    }
+    return false;
+  }
+
   // ───── Hamburger menu ─────
   const menuBtn = document.getElementById("menu-btn");
   const menuPanel = document.getElementById("menu-panel");
@@ -328,12 +348,8 @@
           views.toast("Building your plan — usually 2–4 minutes. We'll show it on your home page when it's ready.");
           location.hash = "#/";
         } catch (e) {
-          if (e.status === 409) {
-            views.toast("A plan is already being generated for this season.", "error");
-            location.hash = "#/";
-          } else {
-            show(views.error(e.message));
-          }
+          if (handleGenerateError(e, seasonId)) return;
+          show(views.error(e.message));
         }
       },
     );
@@ -389,12 +405,8 @@
           views.toast("Generating a new version — we'll show it on your home page when it's ready.");
           location.hash = "#/";
         } catch (e) {
-          if (e.status === 409) {
-            views.toast("A plan is already being generated for this season.", "error");
-            location.hash = "#/";
-          } else {
-            show(views.error(e.message));
-          }
+          if (handleGenerateError(e, seasonId)) return;
+          show(views.error(e.message));
         }
       },
       () => { location.hash = "#/season/" + seasonId; },
@@ -423,12 +435,8 @@
           views.toast("Updating your plan from this conversation — we'll show it on your home page when it's ready.");
           location.hash = "#/";
         } catch (e) {
-          if (e.status === 409) {
-            views.toast("A plan is already being generated for this season.", "error");
-            location.hash = "#/";
-          } else {
-            show(views.error(e.message));
-          }
+          if (handleGenerateError(e, seasonId)) return;
+          show(views.error(e.message));
         }
       },
       planRes.revision_status,

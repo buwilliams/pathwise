@@ -148,6 +148,7 @@ def my_seasons(
                 "started_at": job.get("started_at"),
                 "from_chat": job.get("from_chat"),
                 "last_error": job.get("last_error"),
+                "last_error_code": job.get("last_error_code"),
             }
         )
     return {"seasons": out}

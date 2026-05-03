@@ -44,6 +44,24 @@ class PlanJobAlreadyRunning(PlanError):
     for the same (user, season). Maps to HTTP 409 in the API layer."""
 
 
+class QuestionnaireIncomplete(PlanError):
+    """Raised when the user's stored answers are missing required keys for
+    the current revision — e.g. after a revision adds new required fields.
+
+    Carries the list of missing keys so the API can return a structured
+    error and the UI can route the user to the questionnaire to fill in
+    just what's missing.
+    """
+
+    code: str = "questionnaire_incomplete"
+
+    def __init__(self, missing_required: list[str]) -> None:
+        self.missing_required = list(missing_required)
+        super().__init__(
+            f"Questionnaire incomplete: missing required keys {self.missing_required}"
+        )
+
+
 @dataclass
 class GeneratedPlan:
     version: int
@@ -132,10 +150,7 @@ def generate_plan(
     answers = qs.get_answers(user_id, pack.id)
     completion = qs.completion(user_id, pack)
     if not completion.is_complete:
-        raise PlanError(
-            f"Questionnaire incomplete: missing required keys "
-            f"{completion.missing_required}"
-        )
+        raise QuestionnaireIncomplete(completion.missing_required)
 
     life = pack.logic.compute_life_state(answers)
 
@@ -294,6 +309,7 @@ def _record_failure(
     error: str,
     chat_context: bool = False,
     pack_version: str | None = None,
+    error_code: str | None = None,
 ) -> None:
     store.append_jsonl(
         jobs_log_path,
@@ -302,6 +318,7 @@ def _record_failure(
             "finished_at": time.time(),
             "status": "failed",
             "error": error,
+            "error_code": error_code,
             "from_chat": chat_context,
             "pack_version": pack_version,
         },
@@ -371,6 +388,7 @@ def _run_plan_job(
             error=str(exc),
             chat_context=chat_context is not None,
             pack_version=pack_version,
+            error_code=getattr(exc, "code", None),
         )
     finally:
         lock_path.unlink(missing_ok=True)
@@ -396,6 +414,14 @@ def start_plan_job(
     # specific revision even if the registry's `latest` changes mid-run.
     pack = get_pack(season_id)
     pack_version = pack.version
+
+    # Synchronous precheck: refuse to spawn the worker thread if the user's
+    # answers don't satisfy the current revision's required-key set. This
+    # surfaces the error in the POST response (rather than after polling)
+    # so the UI can route the user straight to the questionnaire.
+    completion = QuestionnaireService(store).completion(user_id, pack)
+    if not completion.is_complete:
+        raise QuestionnaireIncomplete(completion.missing_required)
 
     existing = store.read_json(lock_path)
     if existing:
@@ -478,12 +504,15 @@ def plan_job_status(
     versions = store.list_plan_versions(user_id, season_id)
     history = store.read_jsonl(jobs_log_path)
     last_error: str | None = None
+    last_error_code: str | None = None
     if history:
         last = history[-1]
         if last.get("status") == "failed":
             last_error = last.get("error")
+            last_error_code = last.get("error_code")
     return {
         "generating": False,
         "latest_version": versions[-1] if versions else None,
         "last_error": last_error,
+        "last_error_code": last_error_code,
     }
