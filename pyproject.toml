@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "pathwise"
 version = "0.1.0"
-description = "Pathwise — a life-strategy planner for teens. One step at a time, on purpose."
+description = "Pathwise — a life-strategy planner for teens. Build momentum, live well."
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",

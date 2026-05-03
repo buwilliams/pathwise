@@ -38,7 +38,7 @@ const views = (() => {
     return card(
       el("h1", {}, "pathwise"),
       el("div", { class: "dotted-path" }, "···●···●···●···▶"),
-      el("p", { class: "tagline" }, "one step at a time, on purpose."),
+      el("p", { class: "tagline" }, "build momentum, live well."),
       el("p", { class: "lede" }, "A small space to think clearly about your money, your time, and what's next."),
       el("div", { class: "field" },
         el("label", { for: "phone" }, "Your phone number"),
@@ -209,7 +209,7 @@ const views = (() => {
     return el("div", {},
       card(
         el("h1", {}, `Hey, ${profile.first_name}.`),
-        el("p", { class: "tagline" }, "one step at a time, on purpose."),
+        el("p", { class: "tagline" }, "build momentum, live well."),
         mySeasons.length
           ? el("p", { class: "lede" }, "Pick up where you left off, or start a new season.")
           : el("p", { class: "lede" }, "Pick a season of life to start. About 10 minutes of questions, then a real plan."),

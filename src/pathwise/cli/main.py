@@ -26,7 +26,7 @@ from pathwise.sms.factory import build_sms_sender
 
 app = typer.Typer(
     name="pathwise",
-    help="Pathwise — life-strategy planner CLI. One step at a time, on purpose.",
+    help="Pathwise — life-strategy planner CLI. Build momentum, live well.",
     no_args_is_help=True,
 )
 
