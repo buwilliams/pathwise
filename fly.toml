@@ -1,6 +1,4 @@
-# Fly app config. Replace `app` with the name you pick at `fly launch`,
-# and `primary_region` with your nearest region (e.g. ord, iad, sjc, lhr).
-app = "pathwise"
+app = "pathwiseai"
 primary_region = "ord"
 
 [build]
