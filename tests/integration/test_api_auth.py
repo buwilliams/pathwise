@@ -11,7 +11,7 @@ from pathwise.config import Settings
 from pathwise.core.auth import AuthService
 from pathwise.core.profile import ProfileService
 from pathwise.core.store import FileStore
-from pathwise.sms.console_sender import ConsoleSmsSender
+from pathwise.verify.console_verifier import ConsoleVerifier
 
 
 @pytest.fixture
@@ -21,8 +21,13 @@ def client(tmp_path: Path):
     settings.otp_dir.mkdir(parents=True, exist_ok=True)
     settings.sessions_dir.mkdir(parents=True, exist_ok=True)
     store = FileStore(settings.users_dir)
-    sender = ConsoleSmsSender()
-    auth = AuthService(store, settings, sender)
+    verifier = ConsoleVerifier(
+        store=store,
+        otp_dir=settings.otp_dir,
+        ttl_seconds=settings.pathwise_otp_ttl_seconds,
+        max_attempts=settings.pathwise_otp_max_verify_attempts,
+    )
+    auth = AuthService(store, settings, verifier)
     profiles = ProfileService(store)
 
     app = create_app()
@@ -30,14 +35,14 @@ def client(tmp_path: Path):
     app.dependency_overrides[deps.get_store] = lambda: store
     app.dependency_overrides[deps.get_auth_service] = lambda: auth
     app.dependency_overrides[deps.get_profile_service] = lambda: profiles
-    return TestClient(app), sender
+    return TestClient(app), verifier
 
 
 PHONE = "+12025550100"
 
 
-def _last_code(sender: ConsoleSmsSender) -> str:
-    return sender.sent[-1][1].split("code is ")[1].split(".")[0]
+def _last_code(verifier: ConsoleVerifier) -> str:
+    return verifier.sent[-1][1]
 
 
 def test_full_auth_then_onboard_flow(client) -> None:

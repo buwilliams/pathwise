@@ -18,7 +18,11 @@ class Settings(BaseSettings):
 
     twilio_account_sid: str = ""
     twilio_auth_token: str = ""
+    # Only needed for the raw-SMS `pathwise auth test-sms` command.
     twilio_from_number: str = ""
+    # Verify-API service SID for OTP. When set with account_sid + auth_token,
+    # auth uses Twilio Verify; otherwise falls back to ConsoleVerifier.
+    twilio_verify_service_sid: str = ""
 
     pathwise_data_dir: Path = Field(default=Path("./data"))
     pathwise_host: str = "0.0.0.0"
@@ -58,10 +62,20 @@ class Settings(BaseSettings):
 
     @property
     def twilio_enabled(self) -> bool:
+        """Raw-SMS is configured (for the test-sms CLI command only)."""
         return bool(
             self.twilio_account_sid
             and self.twilio_auth_token
             and self.twilio_from_number
+        )
+
+    @property
+    def twilio_verify_enabled(self) -> bool:
+        """Twilio Verify is configured for OTP auth."""
+        return bool(
+            self.twilio_account_sid
+            and self.twilio_auth_token
+            and self.twilio_verify_service_sid
         )
 
 

@@ -9,7 +9,7 @@ from pathwise.config import Settings, get_settings
 from pathwise.core.auth import AuthService
 from pathwise.core.profile import ProfileService
 from pathwise.core.store import FileStore
-from pathwise.sms.factory import build_sms_sender
+from pathwise.verify.factory import build_verifier
 
 
 @lru_cache(maxsize=1)
@@ -25,7 +25,8 @@ def get_profile_service() -> ProfileService:
 @lru_cache(maxsize=1)
 def get_auth_service() -> AuthService:
     settings = get_settings()
-    return AuthService(get_store(), settings, build_sms_sender(settings))
+    store = get_store()
+    return AuthService(store, settings, build_verifier(settings, store))
 
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]

@@ -1,0 +1,38 @@
+# Keep the build context small. Match .gitignore intent.
+.git
+.github
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+*.egg-info
+dist
+build
+
+# Local data (persisted on Fly via the volume; the image must not bake it in).
+data
+
+# Local env files. Secrets go through `fly secrets set`.
+.env
+.env.local
+
+# Editor / OS noise.
+.vscode
+.idea
+.DS_Store
+
+# Tests aren't needed in the runtime image.
+tests
+
+# Scripts are dev-only.
+scripts
+
+# Local docs build artifacts.
+docs/_build

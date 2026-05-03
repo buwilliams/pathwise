@@ -160,10 +160,15 @@ def test_plans_index_endpoint_returns_enriched_versions(setup, tmp_path) -> None
     from pathwise.api.app import create_app
     from pathwise.core.auth import AuthService
     from pathwise.core.profile import ProfileService
-    from pathwise.sms.console_sender import ConsoleSmsSender
+    from pathwise.verify.console_verifier import ConsoleVerifier
 
-    sender = ConsoleSmsSender()
-    auth = AuthService(store, settings, sender)
+    verifier = ConsoleVerifier(
+        store=store,
+        otp_dir=settings.otp_dir,
+        ttl_seconds=settings.pathwise_otp_ttl_seconds,
+        max_attempts=settings.pathwise_otp_max_verify_attempts,
+    )
+    auth = AuthService(store, settings, verifier)
 
     # Generate two plan versions
     for _ in range(2):
@@ -188,7 +193,7 @@ def test_plans_index_endpoint_returns_enriched_versions(setup, tmp_path) -> None
 
     # Sign in as the profile holder
     client.post("/auth/start", json={"phone": PHONE})
-    code = sender.sent[-1][1].split("code is ")[1].split(".")[0]
+    code = verifier.sent[-1][1]
     token = client.post("/auth/verify", json={"phone": PHONE, "code": code}).json()[
         "session_token"
     ]

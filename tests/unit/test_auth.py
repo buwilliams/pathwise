@@ -13,7 +13,7 @@ from pathwise.core.auth import (
     TooManyAttemptsError,
 )
 from pathwise.core.store import FileStore
-from pathwise.sms.console_sender import ConsoleSmsSender
+from pathwise.verify.console_verifier import ConsoleVerifier
 
 
 @pytest.fixture
@@ -33,25 +33,29 @@ def auth(settings: Settings) -> AuthService:
     settings.otp_dir.mkdir(parents=True, exist_ok=True)
     settings.sessions_dir.mkdir(parents=True, exist_ok=True)
     store = FileStore(settings.users_dir)
-    return AuthService(store, settings, ConsoleSmsSender())
+    verifier = ConsoleVerifier(
+        store=store,
+        otp_dir=settings.otp_dir,
+        ttl_seconds=settings.pathwise_otp_ttl_seconds,
+        max_attempts=settings.pathwise_otp_max_verify_attempts,
+    )
+    return AuthService(store, settings, verifier)
 
 
 PHONE = "+12025550100"
 
 
 def _last_code_sent(auth: AuthService) -> str:
-    sender: ConsoleSmsSender = auth.sms  # type: ignore[assignment]
-    body = sender.sent[-1][1]
-    # Body format: "Your Pathwise code is 123456. ..."
-    return body.split("code is ")[1].split(".")[0]
+    verifier: ConsoleVerifier = auth.verifier  # type: ignore[assignment]
+    return verifier.sent[-1][1]
 
 
 class TestStartCode:
     def test_sends_a_code(self, auth: AuthService) -> None:
         auth.start(PHONE)
-        sender: ConsoleSmsSender = auth.sms  # type: ignore[assignment]
-        assert len(sender.sent) == 1
-        assert sender.sent[0][0] == PHONE
+        verifier: ConsoleVerifier = auth.verifier  # type: ignore[assignment]
+        assert len(verifier.sent) == 1
+        assert verifier.sent[0][0] == PHONE
 
     def test_rate_limit_after_max_per_hour(self, auth: AuthService) -> None:
         for _ in range(3):

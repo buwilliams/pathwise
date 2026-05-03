@@ -23,6 +23,7 @@ from pathwise.core.season import (
 )
 from pathwise.core.store import FileStore
 from pathwise.sms.factory import build_sms_sender
+from pathwise.verify.factory import build_verifier
 
 app = typer.Typer(
     name="pathwise",
@@ -37,7 +38,8 @@ def _store() -> FileStore:
 
 def _auth() -> AuthService:
     settings = get_settings()
-    return AuthService(_store(), settings, build_sms_sender(settings))
+    store = _store()
+    return AuthService(store, settings, build_verifier(settings, store))
 
 
 def _profiles() -> ProfileService:
