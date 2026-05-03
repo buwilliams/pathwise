@@ -33,7 +33,7 @@ def _emma_answers() -> dict:
 
 
 def test_status_quo_scenario_viable() -> None:
-    pack = get_pack("build-independence")
+    pack = get_pack("build-independence", revision="0.4.0")
     life = compute_life_state(_emma_answers())
     s = next(x for x in pack.scenarios if x.id == "stay_no_car_save")
     scored = score_scenario(s, life, pack.weights)
@@ -44,7 +44,7 @@ def test_status_quo_scenario_viable() -> None:
 def test_move_out_with_car_in_expensive_market_is_unviable() -> None:
     """Per Emma's model: in any market with realistic urban rent, moving out
     while buying a car on $1800/mo income should fail viability."""
-    pack = get_pack("build-independence")
+    pack = get_pack("build-independence", revision="0.4.0")
     life = compute_life_state(_emma_answers())
     expensive_market = {
         "rent": {
@@ -60,7 +60,7 @@ def test_move_out_with_car_in_expensive_market_is_unviable() -> None:
 def test_move_out_with_car_ranks_below_independence_ladder() -> None:
     """The Emma model's central criticism: doing both at once should rank
     below the staged-independence path."""
-    pack = get_pack("build-independence")
+    pack = get_pack("build-independence", revision="0.4.0")
     life = compute_life_state(_emma_answers())
     scored = score_all(pack.scenarios, life, pack.weights)
     by_id = {s.id: s for s in scored}
@@ -71,7 +71,7 @@ def test_move_out_with_car_ranks_below_independence_ladder() -> None:
 def test_income_growth_paths_beat_pure_status_quo() -> None:
     """Per Emma's model §Skills: K → Y → M → T → V means skill-building is
     a lever that should rank above plain status-quo for someone open to it."""
-    pack = get_pack("build-independence")
+    pack = get_pack("build-independence", revision="0.4.0")
     life = compute_life_state(_emma_answers())
     scored = score_all(pack.scenarios, life, pack.weights)
     by_id = {s.id: s for s in scored}
@@ -79,7 +79,7 @@ def test_income_growth_paths_beat_pure_status_quo() -> None:
 
 
 def test_all_scenarios_scored_and_sorted() -> None:
-    pack = get_pack("build-independence")
+    pack = get_pack("build-independence", revision="0.4.0")
     life = compute_life_state(_emma_answers())
     scored = score_all(pack.scenarios, life, pack.weights)
     assert len(scored) == len(pack.scenarios)
@@ -93,7 +93,7 @@ def test_all_scenarios_scored_and_sorted() -> None:
 
 def test_research_overrides_defaults() -> None:
     """Higher local rent should make move-out scenarios harder to keep viable."""
-    pack = get_pack("build-independence")
+    pack = get_pack("build-independence", revision="0.4.0")
     life = compute_life_state(_emma_answers())
     cheap = {
         "rent": {
@@ -172,7 +172,7 @@ def test_scenario_H_accumulates_extra_emotional_loads() -> None:
 def test_high_H_depresses_enjoyable_stability_goals_via_penalty() -> None:
     """Hard home + stay-home scenario should score worse on e/s/g than the
     same scenario with peaceful home, even though i/n/y/r are identical."""
-    pack = get_pack("build-independence")
+    pack = get_pack("build-independence", revision="0.4.0")
     base_answers = _emma_answers()
     stay = next(x for x in pack.scenarios if x.id == "stay_no_car_save")
 
@@ -194,7 +194,7 @@ def test_high_H_depresses_enjoyable_stability_goals_via_penalty() -> None:
 
 def test_h_does_not_appear_in_component_scores() -> None:
     """Per essay: H does not appear directly in the score. Verify no `h` key."""
-    pack = get_pack("build-independence")
+    pack = get_pack("build-independence", revision="0.4.0")
     life = compute_life_state(_emma_answers())
     s = pack.scenarios[0]
     scored = score_scenario(s, life, pack.weights)
@@ -232,7 +232,7 @@ def test_score_recoverability_compounds_when_buffer_thin() -> None:
 
 
 def test_scored_scenario_carries_recoverability_and_bucket() -> None:
-    pack = get_pack("build-independence")
+    pack = get_pack("build-independence", revision="0.4.0")
     life = compute_life_state(_emma_answers())
     s = next(x for x in pack.scenarios if x.id == "move_out_with_car")
     scored = score_scenario(s, life, pack.weights)
@@ -241,7 +241,7 @@ def test_scored_scenario_carries_recoverability_and_bucket() -> None:
 
 
 def test_no_income_zero_buffer_is_fragile() -> None:
-    pack = get_pack("build-independence")
+    pack = get_pack("build-independence", revision="0.4.0")
     life = compute_life_state(
         {
             "current_monthly_take_home": 0,

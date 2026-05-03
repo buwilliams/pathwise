@@ -30,23 +30,40 @@ def setup(tmp_path: Path):
     )
     pack = get_pack("build-independence")
     qs = QuestionnaireService(store)
-    # Fill every required key with a sensible value
+    # Fill every required key with a sensible value (v0_5_0 schema).
     answers = {
+        "wants_mobility": ["car"],
+        "wants_housing": ["move_out"],
+        "wants_education": ["trade_school"],
+        "wants_work": ["full_time_job"],
+        "wants_relationships": ["deepen_friendships"],
+        "wants_place": ["stay_where_i_am"],
+        "wants_health": ["fitness_practice"],
+        "wants_money_goals": ["emergency_fund"],
+        "wants_lifestyle": [],
         "current_savings": "10000",
         "current_monthly_take_home": "1800",
         "current_monthly_bills": "250",
+        "current_debt": "0",
         "lives_with_parents": "yes",
         "has_car": "no",
         "emergency_fund_floor": "3000",
         "monthly_pressure_comfort": "mild",
+        "productive_hours_per_week": "18",
+        "buffer_hours_per_week": "10",
+        "quality_of_time_now": "4",
+        "physical_health_self": "4",
+        "mental_health_self": "4",
+        "fitness_practice_freq": "weekly",
+        "emotional_state_now": "neutral",
+        "relational_quality_now": "okay",
         "current_job_feeling": "ok",
         "hours_preference": "more",
-        "interested_in_training": "yes",
-        "move_out_urgency": "4",
+        "move_out_urgency": "3",
         "move_out_horizon": "1yr",
-        "productive_hours_per_week": "18",
-        "quality_of_time_now": "4",
         "top_value": "independence",
+        "stability_now": "3",
+        "social_satisfaction": "3",
     }
     qs.set_answers(profile.user_id, pack, answers)
     return settings, store, profile
@@ -107,11 +124,14 @@ def test_meta_records_scenarios_and_life_state(setup) -> None:
     text, meta = read_plan(profile.user_id, "build-independence", 1, store)
     assert text == "# plan\n"
     assert meta["model_plan"] == "claude-opus-4-7"
-    assert meta["life_state"]["cash_flow_monthly"] == 1550
-    assert len(meta["scored_scenarios"]) == 7
-    # All 7 scenarios from Emma's model are scored and ranked
-    ids = [s["id"] for s in meta["scored_scenarios"]]
-    assert "low_rent_modest_car_grow_income" in ids
+    # v0_5_0 life-state is grouped by L's five top-level dimensions.
+    assert meta["life_state"]["A"]["c"] == 1550
+    # Each scored item is a path-of-stages.
+    assert meta["scored_scenarios"]
+    first = meta["scored_scenarios"][0]
+    assert "stages" in first and len(first["stages"]) >= 1
+    ids = [r["id"] for r in meta["scored_scenarios"]]
+    assert "trade_school_direct" in ids
 
 
 def test_incomplete_questionnaire_rejected(setup) -> None:
@@ -209,7 +229,7 @@ def test_plan_prompt_renders_with_full_context(setup) -> None:
 
     # System prompt is the season pack's system.md
     assert "wise older friend" in captured["system"]
-    # Plan prompt addresses Emma by name and mentions specific scenarios
+    # Plan prompt addresses the user by name and mentions one of v0_5_0's paths.
     assert "Emma" in captured["user"]
-    assert "low_rent_modest_car_grow_income" in captured["user"] or \
-        "Stay low-rent, modest car" in captured["user"]
+    assert "trade_school_direct" in captured["user"] or \
+        "Trade school" in captured["user"]

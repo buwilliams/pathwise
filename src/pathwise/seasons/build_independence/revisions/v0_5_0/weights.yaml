@@ -1,0 +1,43 @@
+# Per the §3.5 weights table in model.md. The leading qe term is a
+# cross-product (q * e); every other entry is a linear weight on a
+# scalar life-state component. K's sub-components and d are tracked
+# but not directly scored — their effect propagates through other
+# variables.
+
+weights:
+  qe: 5     # q * e cross-term — "time directed at enjoyment"
+
+  # Values (V)
+  i1: 2     # mobility independence
+  i2: 3     # financial independence
+  i3: 2     # residential independence
+  i4: 2     # decision independence
+  e:  3     # enjoyable life experience
+  g:  3     # goal progress
+  beta: 4   # stability / emotional safety
+
+  # Time (T)
+  p: 4      # productive hours per week
+  b: 4      # buffer hours
+  q: 4      # quality of time / energy
+
+  # Assets (A)
+  c: 4      # monthly cash flow
+  sigma: 3  # savings
+  r: 4      # risk buffer / emergency fund
+  y: 3      # income
+  gamma: 2  # income growth rate
+
+  # Health (W)
+  phi: 4    # physical health
+  psi: 4    # mental health
+  zeta: 2   # fitness practice
+  eta: 3    # net emotional impact (signed)
+  nu: 4     # relational quality
+
+# Recoverability sub-weights for R(s_j) = 1 - (w_l*lambda + w_x*xi + w_d*delta) / sum.
+# Initial defaults — calibration may change these.
+recoverability_weights:
+  lambda: 1   # lock-in duration
+  xi:     1   # exit cost
+  delta:  1   # state disruption

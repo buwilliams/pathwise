@@ -1,0 +1,635 @@
+{
+  "schema_version": 1,
+  "data_model": {
+    "wants_mobility":       { "type": "string_set", "values": ["car","no_car_use_transit"] },
+    "wants_housing":        { "type": "string_set", "values": ["move_out","stay_home"] },
+    "wants_education":      { "type": "string_set", "values": ["four_year_college","community_college","trade_school","online_self_study","apprenticeship","no_formal_training"] },
+    "wants_work":           { "type": "string_set", "values": ["full_time_job","part_time_job","internship","side_hustle","start_business"] },
+    "wants_relationships":  { "type": "string_set", "values": ["romantic_relationship","deepen_friendships","find_new_community","family_closeness"] },
+    "wants_place":          { "type": "string_set", "values": ["move_to_new_city","stay_where_i_am","travel_or_gap_year"] },
+    "wants_health":         { "type": "string_set", "values": ["fitness_practice","mental_health_support"] },
+    "wants_money_goals":    { "type": "string_set", "values": ["emergency_fund","save_for_big_purchase","pay_down_debt"] },
+    "wants_lifestyle":      { "type": "string_set", "values": ["hobby_investment","pet"] },
+
+    "current_savings":            { "type": "money", "min": 0 },
+    "current_monthly_take_home":  { "type": "money", "min": 0 },
+    "current_monthly_bills":      { "type": "money", "min": 0 },
+    "current_debt":               { "type": "money", "min": 0 },
+    "lives_with_parents":         { "type": "yes_no" },
+    "has_car":                    { "type": "yes_no" },
+
+    "emergency_fund_floor":       { "type": "money", "min": 0 },
+    "monthly_pressure_comfort":   { "type": "string", "values": ["zero","mild","moderate","high"] },
+    "desired_two_year_income":    { "type": "money", "min": 0 },
+
+    "productive_hours_per_week":  { "type": "hours", "min": 0, "max": 80 },
+    "buffer_hours_per_week":      { "type": "hours", "min": 0, "max": 60 },
+    "quality_of_time_now":        { "type": "scale", "min": 1, "max": 5 },
+
+    "physical_health_self":       { "type": "scale", "min": 1, "max": 5 },
+    "mental_health_self":         { "type": "scale", "min": 1, "max": 5 },
+    "fitness_practice_freq":      { "type": "string", "values": ["none","occasional","weekly","near_daily"] },
+    "emotional_state_now":        { "type": "string", "values": ["very_negative","negative","neutral","positive","very_positive"] },
+    "relational_quality_now":     { "type": "string", "values": ["thin","okay","strong","very_strong"] },
+
+    "car_purpose":                { "type": "string_set", "values": ["work","school","friends","freedom","privacy","errands"] },
+    "car_max_savings_spend":      { "type": "money", "min": 0 },
+    "car_repair_1k_reaction":     { "type": "string", "values": ["fine","stressed","scary","catastrophic"] },
+
+    "rent_max_share_of_income":   { "type": "number", "min": 0, "max": 100, "unit": "%" },
+    "home_emotional_cost":        { "type": "string", "values": ["peaceful","fine","tense","hard"] },
+
+    "current_job_feeling":        { "type": "string", "values": ["love","ok","tolerate","hate","none"] },
+    "hours_preference":           { "type": "string", "values": ["more","same","less"] },
+
+    "interests":                  { "type": "string" },
+    "education_modality":         { "type": "string", "values": ["hands_on","certificate","online","community_college","four_year","not_sure"] },
+    "max_training_months":        { "type": "number", "min": 0, "max": 60, "unit": "months" },
+    "training_budget":            { "type": "money", "min": 0 },
+    "completion_confidence":      { "type": "scale", "min": 1, "max": 5 },
+
+    "move_out_urgency":           { "type": "scale", "min": 1, "max": 5 },
+    "move_out_horizon":           { "type": "string", "values": ["now","6mo","1yr","2yr","later"] },
+
+    "romantic_status":            { "type": "string", "values": ["single_open","single_uninterested","dating","committed"] },
+    "social_satisfaction":        { "type": "scale", "min": 1, "max": 5 },
+
+    "top_value":                  { "type": "string", "values": ["independence","net_worth","enjoyment","goals","stability"] },
+    "stability_now":              { "type": "scale", "min": 1, "max": 5 },
+    "one_year_proud_of":          { "type": "string" },
+    "top_fear":                   { "type": "string" }
+  },
+
+  "questions": {
+    "wants_mobility": {
+      "prompt": "Mobility — what are you open to?",
+      "help": "Pick anything that's on the table. Skip if neither applies.",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "car",                   "label": "Owning a car" },
+          { "value": "no_car_use_transit",    "label": "Going carless / using transit, biking, rides" }
+        ]
+      }
+    },
+    "wants_housing": {
+      "prompt": "Housing — what are you considering?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "move_out",  "label": "Moving out (apartment, room, with friends)" },
+          { "value": "stay_home", "label": "Staying with family for now" }
+        ]
+      }
+    },
+    "wants_education": {
+      "prompt": "Education — any of these on the table?",
+      "help": "Pick whatever you're open to exploring, even if you haven't decided.",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "four_year_college",   "label": "4-year college" },
+          { "value": "community_college",   "label": "Community college" },
+          { "value": "trade_school",        "label": "Trade school / certificate" },
+          { "value": "online_self_study",   "label": "Online courses / self-study" },
+          { "value": "apprenticeship",      "label": "Apprenticeship" },
+          { "value": "no_formal_training",  "label": "No formal training" }
+        ]
+      }
+    },
+    "wants_work": {
+      "prompt": "Work — what are you considering?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "full_time_job",  "label": "Full-time job" },
+          { "value": "part_time_job",  "label": "Part-time job" },
+          { "value": "internship",     "label": "Internship / apprenticeship" },
+          { "value": "side_hustle",    "label": "Side hustle / freelance" },
+          { "value": "start_business", "label": "Start a business" }
+        ]
+      }
+    },
+    "wants_relationships": {
+      "prompt": "Relationships — what's on your mind?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "romantic_relationship", "label": "Romantic relationship" },
+          { "value": "deepen_friendships",    "label": "Deepening friendships" },
+          { "value": "find_new_community",    "label": "Finding new community" },
+          { "value": "family_closeness",      "label": "Family closeness" }
+        ]
+      }
+    },
+    "wants_place": {
+      "prompt": "Place — where do you want to be?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "move_to_new_city",   "label": "Move to a new city" },
+          { "value": "stay_where_i_am",    "label": "Stay where I am" },
+          { "value": "travel_or_gap_year", "label": "Travel / gap year" }
+        ]
+      }
+    },
+    "wants_health": {
+      "prompt": "Health — anything you'd like to invest in?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "fitness_practice",      "label": "Fitness practice (movement, food)" },
+          { "value": "mental_health_support", "label": "Mental health support" }
+        ]
+      }
+    },
+    "wants_money_goals": {
+      "prompt": "Money goals — what are you working toward?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "emergency_fund",       "label": "Build an emergency fund" },
+          { "value": "save_for_big_purchase","label": "Save for a big purchase" },
+          { "value": "pay_down_debt",        "label": "Pay down debt" }
+        ]
+      }
+    },
+    "wants_lifestyle": {
+      "prompt": "Lifestyle — anything you want to add?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "hobby_investment", "label": "Invest in a hobby (instrument, sport, craft)" },
+          { "value": "pet",              "label": "Get a pet" }
+        ]
+      }
+    },
+
+    "current_savings": {
+      "prompt": "Roughly how much do you have in savings right now?",
+      "help": "Total of checking, savings, cash. Round to the nearest hundred.",
+      "input": { "kind": "money", "min": 0, "placeholder": "1000" }
+    },
+    "current_monthly_take_home": {
+      "prompt": "About how much do you take home each month from work?",
+      "help": "After taxes. If it varies, give a typical month. Put 0 if you don't work right now.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "current_monthly_bills": {
+      "prompt": "About how much do you spend each month on bills and stuff you have to pay?",
+      "help": "Phone, subscriptions, gas, food you buy. Skip rent for now — that comes next.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "current_debt": {
+      "prompt": "How much debt do you have right now?",
+      "help": "Credit cards, loans, money you owe. Put 0 if none.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "lives_with_parents": {
+      "prompt": "Do you currently live with a parent or family member?",
+      "input": { "kind": "yes_no" }
+    },
+    "has_car": {
+      "prompt": "Do you have your own car right now?",
+      "input": { "kind": "yes_no" }
+    },
+
+    "emergency_fund_floor": {
+      "prompt": "What's the lowest you'd let your savings drop before it would feel scary?",
+      "help": "Your emotional 'don't go below this' line.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "monthly_pressure_comfort": {
+      "prompt": "How much monthly money pressure feels okay to you?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "zero",     "label": "I want zero stress about money each month" },
+          { "value": "mild",     "label": "A little tightness is fine" },
+          { "value": "moderate", "label": "I can handle real pressure if it's worth it" },
+          { "value": "high",     "label": "Bring it on — I'll work harder if I have to" }
+        ]
+      }
+    },
+    "desired_two_year_income": {
+      "prompt": "Two years from now, what monthly income would feel like 'I made it'?",
+      "help": "Take-home, your number. There's no right answer.",
+      "required": false,
+      "input": { "kind": "money", "min": 0 }
+    },
+
+    "productive_hours_per_week": {
+      "prompt": "Outside of work or school, how many hours a week feel actually productive for you?",
+      "help": "Not zoned-out tired hours — hours where you can actually do things.",
+      "input": { "kind": "hours", "min": 0, "max": 80 }
+    },
+    "buffer_hours_per_week": {
+      "prompt": "How many hours a week are unscheduled — yours to direct however?",
+      "help": "Free space, not time you've already promised to anything or anyone.",
+      "input": { "kind": "hours", "min": 0, "max": 60 }
+    },
+    "quality_of_time_now": {
+      "prompt": "Right now, how good is the quality of your free time and energy?",
+      "help": "1 = drained and scattered. 5 = rested and ready.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+
+    "physical_health_self": {
+      "prompt": "How would you rate your physical health right now?",
+      "help": "1 = struggling. 5 = strong.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "mental_health_self": {
+      "prompt": "How would you rate your mental health right now?",
+      "help": "1 = struggling. 5 = solid.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "fitness_practice_freq": {
+      "prompt": "How often do you actually move your body and pay attention to what you eat?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "none",       "label": "Not really" },
+          { "value": "occasional", "label": "Occasionally" },
+          { "value": "weekly",     "label": "A few times a week" },
+          { "value": "near_daily", "label": "Almost every day" }
+        ]
+      }
+    },
+    "emotional_state_now": {
+      "prompt": "How are you feeling about your life lately, on net?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "very_negative", "label": "Pretty rough" },
+          { "value": "negative",      "label": "More bad than good" },
+          { "value": "neutral",       "label": "Neutral / mixed" },
+          { "value": "positive",      "label": "More good than bad" },
+          { "value": "very_positive", "label": "Genuinely good" }
+        ]
+      }
+    },
+    "relational_quality_now": {
+      "prompt": "How strong is your network of people right now?",
+      "help": "Family, close friends, mentors, community.",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "thin",        "label": "Thin — not a lot to lean on" },
+          { "value": "okay",        "label": "Okay — a few people" },
+          { "value": "strong",      "label": "Strong — solid circle" },
+          { "value": "very_strong", "label": "Very strong — surrounded by good people" }
+        ]
+      }
+    },
+
+    "car_purpose": {
+      "prompt": "If you had a car, what would it unlock? (pick any)",
+      "when": { "wants_mobility": { "$contains": "car" } },
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "work",     "label": "Getting to / from work" },
+          { "value": "school",   "label": "School or training" },
+          { "value": "friends",  "label": "Seeing friends" },
+          { "value": "freedom",  "label": "Just freedom to go" },
+          { "value": "privacy",  "label": "Privacy / space" },
+          { "value": "errands",  "label": "Errands and appointments" }
+        ]
+      }
+    },
+    "car_max_savings_spend": {
+      "prompt": "What's the most of your savings you'd feel okay spending on a car?",
+      "help": "Total — purchase price + tax + first insurance payment.",
+      "when": { "wants_mobility": { "$contains": "car" } },
+      "required": false,
+      "input": { "kind": "money", "min": 0 }
+    },
+    "car_repair_1k_reaction": {
+      "prompt": "If the car needed a $1,000 repair three months after you bought it, how would you feel?",
+      "when": { "wants_mobility": { "$contains": "car" } },
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "fine",         "label": "Annoying, but fine" },
+          { "value": "stressed",     "label": "Stressed but I'd handle it" },
+          { "value": "scary",        "label": "Scary — would mess me up" },
+          { "value": "catastrophic", "label": "I literally couldn't pay it" }
+        ]
+      }
+    },
+
+    "rent_max_share_of_income": {
+      "prompt": "What's the most of your monthly income you'd spend on rent?",
+      "help": "As a percentage. (Most experts say 30% is the safe ceiling.)",
+      "when": { "wants_housing": { "$contains": "move_out" } },
+      "required": false,
+      "input": { "kind": "number", "min": 0, "max": 100, "unit": "%" }
+    },
+    "home_emotional_cost": {
+      "prompt": "How does living at home feel right now?",
+      "help": "Staying home is cheaper financially, but not always emotionally — we'd rather know.",
+      "when": { "lives_with_parents": true },
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "peaceful", "label": "Peaceful — I have what I need here" },
+          { "value": "fine",     "label": "Fine — some friction but mostly okay" },
+          { "value": "tense",    "label": "Tense — there's pressure I'd like to escape" },
+          { "value": "hard",     "label": "Hard — staying is costing me real wellbeing" }
+        ]
+      }
+    },
+
+    "current_job_feeling": {
+      "prompt": "How do you feel about your current job?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "love",     "label": "I really like it" },
+          { "value": "ok",       "label": "It's fine for now" },
+          { "value": "tolerate", "label": "I tolerate it for the money" },
+          { "value": "hate",     "label": "I want out" },
+          { "value": "none",     "label": "I don't have one yet" }
+        ]
+      }
+    },
+    "hours_preference": {
+      "prompt": "Right now, do you want to work…",
+      "when": { "current_job_feeling": { "$ne": "none" } },
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "more", "label": "More hours" },
+          { "value": "same", "label": "About the same" },
+          { "value": "less", "label": "Fewer hours" }
+        ]
+      }
+    },
+
+    "interests": {
+      "prompt": "What kinds of work or activities feel interesting to you? (a few words is plenty)",
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. animals, coding, cars, helping people, building stuff" }
+    },
+    "education_modality": {
+      "prompt": "If you trained, what kind sounds most like you?",
+      "when": {
+        "$any": [
+          { "wants_education": { "$contains": "four_year_college" } },
+          { "wants_education": { "$contains": "community_college" } },
+          { "wants_education": { "$contains": "trade_school" } },
+          { "wants_education": { "$contains": "online_self_study" } },
+          { "wants_education": { "$contains": "apprenticeship" } }
+        ]
+      },
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "hands_on",          "label": "Hands-on / apprenticeship" },
+          { "value": "certificate",       "label": "Short certificate program" },
+          { "value": "online",            "label": "Online courses" },
+          { "value": "community_college", "label": "Community college" },
+          { "value": "four_year",         "label": "4-year college" },
+          { "value": "not_sure",          "label": "Not sure yet" }
+        ]
+      }
+    },
+    "max_training_months": {
+      "prompt": "How many months of training would you be willing to do?",
+      "when": {
+        "$any": [
+          { "wants_education": { "$contains": "four_year_college" } },
+          { "wants_education": { "$contains": "community_college" } },
+          { "wants_education": { "$contains": "trade_school" } },
+          { "wants_education": { "$contains": "online_self_study" } },
+          { "wants_education": { "$contains": "apprenticeship" } }
+        ]
+      },
+      "required": false,
+      "input": { "kind": "number", "min": 0, "max": 60, "unit": "months" }
+    },
+    "training_budget": {
+      "prompt": "How much could you put toward training, total?",
+      "help": "Tuition, fees, materials. Loans count as money out, not in.",
+      "when": {
+        "$any": [
+          { "wants_education": { "$contains": "four_year_college" } },
+          { "wants_education": { "$contains": "community_college" } },
+          { "wants_education": { "$contains": "trade_school" } },
+          { "wants_education": { "$contains": "online_self_study" } }
+        ]
+      },
+      "required": false,
+      "input": { "kind": "money", "min": 0 }
+    },
+    "completion_confidence": {
+      "prompt": "If you started a training path, how confident are you you'd finish?",
+      "help": "1 = realistic chance I'd drop out. 5 = I'd see it through.",
+      "when": {
+        "$any": [
+          { "wants_education": { "$contains": "four_year_college" } },
+          { "wants_education": { "$contains": "community_college" } },
+          { "wants_education": { "$contains": "trade_school" } },
+          { "wants_education": { "$contains": "online_self_study" } },
+          { "wants_education": { "$contains": "apprenticeship" } }
+        ]
+      },
+      "required": false,
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+
+    "move_out_urgency": {
+      "prompt": "How much do you want to move out soon?",
+      "help": "1 = I'm fine where I am. 5 = I need out.",
+      "when": { "lives_with_parents": true },
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "move_out_horizon": {
+      "prompt": "When would you ideally move out?",
+      "when": { "wants_housing": { "$contains": "move_out" } },
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "now",   "label": "As soon as possible" },
+          { "value": "6mo",   "label": "Within 6 months" },
+          { "value": "1yr",   "label": "Within a year" },
+          { "value": "2yr",   "label": "Within 2 years" },
+          { "value": "later", "label": "Whenever it makes sense" }
+        ]
+      }
+    },
+
+    "romantic_status": {
+      "prompt": "Where are you with romantic relationships?",
+      "when": { "wants_relationships": { "$contains": "romantic_relationship" } },
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "single_open",         "label": "Single, open to it" },
+          { "value": "single_uninterested", "label": "Single, not focused on it" },
+          { "value": "dating",              "label": "Dating someone" },
+          { "value": "committed",           "label": "In a committed relationship" }
+        ]
+      }
+    },
+    "social_satisfaction": {
+      "prompt": "How satisfied are you with your social life right now?",
+      "help": "1 = isolated. 5 = exactly what I want.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+
+    "top_value": {
+      "prompt": "Of these, which feels most important to you right now?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "independence", "label": "Independence — running my own life" },
+          { "value": "net_worth",    "label": "Building savings and net worth" },
+          { "value": "enjoyment",    "label": "Enjoying life and friends" },
+          { "value": "goals",        "label": "Making real progress on goals" },
+          { "value": "stability",    "label": "Feeling safe and stable" }
+        ]
+      }
+    },
+    "stability_now": {
+      "prompt": "How stable does your life feel right now?",
+      "help": "1 = chaotic, 5 = solid ground.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "one_year_proud_of": {
+      "prompt": "A year from now, what would you love to be able to say you did?",
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. saved $5k, finished a course, moved out, learned to drive" }
+    },
+    "top_fear": {
+      "prompt": "What's the thing you most want to avoid happening in the next year?",
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. broke, stuck, working a job I hate, drifting" }
+    }
+  },
+
+  "steps": [
+    {
+      "id": "wants",
+      "title": "What you're considering",
+      "blurb": "Pick anything that's on the table. We'll only ask follow-up questions about the things you're actually thinking about.",
+      "questions": [
+        "wants_mobility",
+        "wants_housing",
+        "wants_education",
+        "wants_work",
+        "wants_relationships",
+        "wants_place",
+        "wants_health",
+        "wants_money_goals",
+        "wants_lifestyle"
+      ]
+    },
+    {
+      "id": "now",
+      "title": "Where you are now",
+      "blurb": "Quick snapshot. We're not judging — we're getting honest numbers so the plan is real.",
+      "questions": [
+        "current_savings",
+        "current_monthly_take_home",
+        "current_monthly_bills",
+        "current_debt",
+        "lives_with_parents",
+        "has_car"
+      ]
+    },
+    {
+      "id": "money",
+      "title": "Money comfort",
+      "blurb": "How much pressure feels okay, and where your floor is.",
+      "questions": ["emergency_fund_floor", "monthly_pressure_comfort", "desired_two_year_income"]
+    },
+    {
+      "id": "time",
+      "title": "Time and energy",
+      "questions": ["productive_hours_per_week", "buffer_hours_per_week", "quality_of_time_now"]
+    },
+    {
+      "id": "health",
+      "title": "Health, on the inside",
+      "blurb": "Body, mind, and the people around you. None of this is on a balance sheet, but all of it shapes what's actually possible.",
+      "questions": [
+        "physical_health_self",
+        "mental_health_self",
+        "fitness_practice_freq",
+        "emotional_state_now",
+        "relational_quality_now"
+      ]
+    },
+    {
+      "id": "mobility",
+      "title": "About a car",
+      "blurb": "A car can unlock a lot. It can also drain a lot.",
+      "when": { "wants_mobility": { "$contains": "car" } },
+      "questions": ["car_purpose", "car_max_savings_spend", "car_repair_1k_reaction"]
+    },
+    {
+      "id": "housing",
+      "title": "About moving out",
+      "when": {
+        "$any": [
+          { "wants_housing": { "$contains": "move_out" } },
+          { "lives_with_parents": true }
+        ]
+      },
+      "questions": ["rent_max_share_of_income", "home_emotional_cost", "move_out_urgency", "move_out_horizon"]
+    },
+    {
+      "id": "work",
+      "title": "Work and income",
+      "questions": ["current_job_feeling", "hours_preference"]
+    },
+    {
+      "id": "education",
+      "title": "Skills and what's next",
+      "when": {
+        "$any": [
+          { "wants_education": { "$contains": "four_year_college" } },
+          { "wants_education": { "$contains": "community_college" } },
+          { "wants_education": { "$contains": "trade_school" } },
+          { "wants_education": { "$contains": "online_self_study" } },
+          { "wants_education": { "$contains": "apprenticeship" } }
+        ]
+      },
+      "questions": ["interests", "education_modality", "max_training_months", "training_budget", "completion_confidence"]
+    },
+    {
+      "id": "relationships",
+      "title": "Relationships",
+      "when": {
+        "$any": [
+          { "wants_relationships": { "$contains": "romantic_relationship" } },
+          { "wants_relationships": { "$contains": "deepen_friendships" } },
+          { "wants_relationships": { "$contains": "find_new_community" } },
+          { "wants_relationships": { "$contains": "family_closeness" } }
+        ]
+      },
+      "questions": ["romantic_status", "social_satisfaction"]
+    },
+    {
+      "id": "future",
+      "title": "Future you",
+      "questions": ["top_value", "stability_now", "one_year_proud_of", "top_fear"]
+    }
+  ]
+}

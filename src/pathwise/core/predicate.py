@@ -23,7 +23,9 @@ from __future__ import annotations
 
 from typing import Any
 
-COMPARISON_OPS = {"$eq", "$ne", "$gt", "$gte", "$lt", "$lte", "$in", "$nin"}
+COMPARISON_OPS = {
+    "$eq", "$ne", "$gt", "$gte", "$lt", "$lte", "$in", "$nin", "$contains",
+}
 COMBINATORS = {"$all", "$any", "$not"}
 
 
@@ -120,6 +122,13 @@ def _eval_op(op: str, actual: Any, expected: Any) -> bool:
         return actual in expected
     if op == "$nin":
         return actual not in expected
+    if op == "$contains":
+        # "the answer at this field contains expected" — for multi_choice
+        # / string_set fields where the answer is a list. Falls back to
+        # equality when the actual is a scalar.
+        if isinstance(actual, (list, tuple, set)):
+            return expected in actual
+        return actual == expected
     # Numeric comparisons against missing/None evaluate to False.
     if actual is None or expected is None:
         return False

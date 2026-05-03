@@ -6,7 +6,7 @@
 // Combinators: { $all: [...] }, { $any: [...] }, { $not: <pred> }
 
 const predicate = (() => {
-  const COMPARISON_OPS = new Set(["$eq", "$ne", "$gt", "$gte", "$lt", "$lte", "$in", "$nin"]);
+  const COMPARISON_OPS = new Set(["$eq", "$ne", "$gt", "$gte", "$lt", "$lte", "$in", "$nin", "$contains"]);
   const COMBINATORS = new Set(["$all", "$any", "$not"]);
 
   function evaluate(pred, answers) {
@@ -52,6 +52,10 @@ const predicate = (() => {
       case "$ne":  return actual !== expected;
       case "$in":  return expected.includes(actual);
       case "$nin": return !expected.includes(actual);
+      case "$contains":
+        // For multi_choice / string_set answers (actual is an array).
+        if (Array.isArray(actual)) return actual.includes(expected);
+        return actual === expected;
     }
     if (actual === null || actual === undefined || expected === null) return false;
     switch (op) {

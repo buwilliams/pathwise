@@ -38,10 +38,16 @@ class SeasonPack:
     pack_dir: Path
     questionnaire: Questionnaire
     weights: dict[str, float]
+    # Flat scenarios for legacy revisions that use single-state scoring.
+    # New revisions can use a paths-of-stages structure instead and load
+    # it from the same scenarios.yaml file (different top-level key).
     scenarios: list[Scenario]
     prompts_dir: Path
     age_min: int | None = None
     age_max: int | None = None
+    # Back-reference set by the revision's BaseLogic on construction.
+    # Callers reach per-revision behavior via pack.logic.
+    logic: Any = None
 
     @property
     def revision(self) -> str:
@@ -74,7 +80,14 @@ def load_pack(pack_dir: Path) -> SeasonPack:
 
     questionnaire = _load_questionnaire(pack_dir / "questionnaire.json")
     weights = _load_yaml(pack_dir / "weights.yaml")["weights"]
-    scenarios = [Scenario(**s) for s in _load_yaml(pack_dir / "scenarios.yaml")["scenarios"]]
+    scenarios_raw = _load_yaml(pack_dir / "scenarios.yaml")
+    # Two supported structures: legacy `scenarios:` (flat) or new `paths:`
+    # (paths-of-stages). The flat form populates `pack.scenarios`; the
+    # paths form leaves it empty and is consumed by the revision's logic
+    # via direct file load.
+    scenarios = [
+        Scenario(**s) for s in scenarios_raw.get("scenarios", [])
+    ] if isinstance(scenarios_raw, dict) else []
 
     return SeasonPack(
         id=pack_meta["id"],

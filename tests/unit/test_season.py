@@ -16,9 +16,14 @@ def test_default_pack_loads() -> None:
     assert pack.name
     assert pack.summary
     assert pack.questionnaire.questions
-    assert pack.scenarios
-    assert pack.weights["c"] == 4  # cash flow weight from the model
-    assert pack.weights["s"] == 4  # stability weight
+    # v0_5_0 uses paths-of-stages (loaded by its logic), not the legacy
+    # flat scenarios list. The cash-flow weight from the new model.
+    assert pack.weights["c"] == 4
+
+    # v0_4_0 still loads with its own (flat) scenarios list.
+    legacy = get_pack("build-independence", revision="0.4.0")
+    assert legacy.scenarios
+    assert legacy.weights["c"] == 4
 
 
 def test_questions_have_required_fields() -> None:
@@ -35,9 +40,9 @@ def test_questions_have_required_fields() -> None:
 
 
 def test_scenarios_match_model() -> None:
-    pack = get_pack("build-independence")
+    """v0_4_0 — the 7 scenarios from that revision's §Candidate Scenarios."""
+    pack = get_pack("build-independence", revision="0.4.0")
     ids = {s.id for s in pack.scenarios}
-    # The 7 scenarios from model.md §Candidate Scenarios
     expected = {
         "stay_no_car_save",
         "stay_modest_car",
@@ -64,11 +69,12 @@ def test_list_packs_finds_default() -> None:
 
 def test_revision_api() -> None:
     revs = list_revisions("build-independence")
-    assert "0.4.0" in revs
-    assert latest_revision("build-independence") == "0.4.0"
-    pack = get_pack("build-independence", revision="0.4.0")
-    assert pack.revision == "0.4.0"
-    assert pack.version == "0.4.0"
+    assert {"0.4.0", "0.5.0"}.issubset(set(revs))
+    assert latest_revision("build-independence") == "0.5.0"
+    legacy = get_pack("build-independence", revision="0.4.0")
+    assert legacy.revision == "0.4.0"
+    current = get_pack("build-independence")  # latest by default
+    assert current.revision == "0.5.0"
 
 
 def test_unknown_revision_raises() -> None:

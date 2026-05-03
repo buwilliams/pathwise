@@ -1,0 +1,190 @@
+# Paths of stages, per model.md §2.5. Each path is a sequence; each stage
+# has a duration and structural state flags. The deterministic core
+# composes per-stage life-states from the user's answers + these flags
+# and scores the path via duration-weighted Momentum sum.
+#
+# Recoverability inputs (lambda, xi, state_disruption) on each stage feed
+# R(s_j) per §2.4 — they describe the decision that *enters* this stage,
+# not the steady-state of the stage itself.
+#
+# All paths assume a planning horizon of 60 months (5 years). Total
+# stage durations within a path must satisfy sum(d_j) <= H.
+
+horizon_months: 60
+
+paths:
+  - id: stay_save_train_move
+    label: "Stay home, save, train, then move out"
+    bucket: skill_leverage
+    description: "Live with family while building cash reserves, complete a credential or trade program, then move out once income covers the load."
+    stages:
+      - id: stay_save
+        label: "Stay home and save"
+        duration_months: 6
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.05, xi: 0.00, state_disruption: 0.05 }
+      - id: train_in_place
+        label: "Stay home, training underway"
+        duration_months: 24
+        car: false
+        moves_out: false
+        training_active: true
+        income_growth: false
+        recoverability: { lambda: 0.40, xi: 0.10, state_disruption: 0.30 }
+      - id: move_out_post_train
+        label: "Move out with new income"
+        duration_months: 30
+        car: true
+        moves_out: true
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.20, xi: 0.10, state_disruption: 0.50 }
+
+  - id: stay_modest_car_save
+    label: "Stay home with a modest car, save aggressively"
+    bucket: compounding_freedom
+    description: "Reliable, low-cost car for work and errands. Live with family, save the rest, evaluate next move once savings cross a threshold."
+    stages:
+      - id: stay_save
+        label: "Stay home and save"
+        duration_months: 6
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.05, xi: 0.00, state_disruption: 0.05 }
+      - id: car_purchase
+        label: "Buy modest used car, keep saving"
+        duration_months: 54
+        car: true
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.30, xi: 0.40, state_disruption: 0.30 }
+
+  - id: train_then_work
+    label: "Train first, then full-time work"
+    bucket: skill_leverage
+    description: "Short certificate or trade program followed by full-time entry into the field."
+    stages:
+      - id: train_full
+        label: "Training underway"
+        duration_months: 12
+        car: false
+        moves_out: false
+        training_active: true
+        income_growth: false
+        recoverability: { lambda: 0.20, xi: 0.05, state_disruption: 0.20 }
+      - id: work_post_train
+        label: "Full-time in the field"
+        duration_months: 48
+        car: true
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.10, xi: 0.05, state_disruption: 0.30 }
+
+  - id: work_more_save_more
+    label: "Work more hours, save aggressively, delay everything"
+    bucket: fast_freedom
+    description: "Shift the schedule toward hours-and-savings now. Defer training and moving out until savings buffer is comfortable."
+    stages:
+      - id: max_hours
+        label: "Long hours, save"
+        duration_months: 18
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.05, xi: 0.00, state_disruption: 0.10 }
+      - id: car_purchase
+        label: "Add a car once buffer is solid"
+        duration_months: 42
+        car: true
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.30, xi: 0.40, state_disruption: 0.30 }
+
+  - id: move_out_with_car
+    label: "Move out and buy a car right away"
+    bucket: fast_freedom
+    description: "Take both big residential and mobility steps now. Highest momentum on independence axes; highest fragility on cash flow and risk buffer."
+    stages:
+      - id: move_out_car
+        label: "Move out, car owned"
+        duration_months: 60
+        car: true
+        moves_out: true
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.40, xi: 0.50, state_disruption: 0.70 }
+
+  - id: move_out_no_car
+    label: "Move out, no car"
+    bucket: fast_freedom
+    description: "Move out but stay close to transit and work. Lower monthly burn than buying a car at the same time."
+    stages:
+      - id: move_out_transit
+        label: "Move out, no car"
+        duration_months: 60
+        car: false
+        moves_out: true
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.30, xi: 0.40, state_disruption: 0.50 }
+
+  - id: community_college_transfer
+    label: "Community college, then transfer to a 4-year"
+    bucket: skill_leverage
+    description: "Two years at community college (lower tuition, can stay home) then transfer to a four-year program for the bachelor's. Income gain comes after both."
+    stages:
+      - id: cc_at_home
+        label: "Community college, living at home"
+        duration_months: 24
+        car: true
+        moves_out: false
+        training_active: true
+        income_growth: false
+        recoverability: { lambda: 0.40, xi: 0.10, state_disruption: 0.30 }
+      - id: transfer_finish
+        label: "Transfer + finish bachelor's"
+        duration_months: 24
+        car: true
+        moves_out: true
+        training_active: true
+        income_growth: false
+        recoverability: { lambda: 0.40, xi: 0.20, state_disruption: 0.50 }
+      - id: post_grad_work
+        label: "Bachelor's-level work"
+        duration_months: 12
+        car: true
+        moves_out: true
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.10, xi: 0.05, state_disruption: 0.30 }
+
+  - id: trade_school_direct
+    label: "Trade school, then trade work"
+    bucket: skill_leverage
+    description: "12-month trade program (welding, HVAC, electrical, plumbing, etc.) followed by direct entry into a paying trade."
+    stages:
+      - id: trade_train
+        label: "Trade school, living at home"
+        duration_months: 12
+        car: true
+        moves_out: false
+        training_active: true
+        income_growth: false
+        recoverability: { lambda: 0.20, xi: 0.05, state_disruption: 0.20 }
+      - id: trade_work
+        label: "Working in the trade"
+        duration_months: 48
+        car: true
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.10, xi: 0.05, state_disruption: 0.30 }

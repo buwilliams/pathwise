@@ -18,8 +18,6 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 from pathwise.config import Settings, get_settings
-from pathwise.core.life_state import compute_life_state
-from pathwise.core.momentum import score_all
 from pathwise.core.profile import Profile, ProfileService
 from pathwise.core.questionnaire import QuestionnaireService
 from pathwise.core.season import SeasonPack, get_pack
@@ -139,7 +137,7 @@ def generate_plan(
             f"{completion.missing_required}"
         )
 
-    life = compute_life_state(answers)
+    life = pack.logic.compute_life_state(answers)
 
     started = time.monotonic()
     logger.info(
@@ -166,31 +164,19 @@ def generate_plan(
         logger.info("plan.generate skipping research (skip_research=True)")
         research_bundle = ResearchBundle(data={}, sources=[], raw_text="", usage={})
 
-    scored = score_all(pack.scenarios, life, pack.weights, research_bundle.data)
-    logger.info("plan.generate scored %d scenarios", len(scored))
-
-    # Group scored scenarios by named path bucket for the three-paths output.
-    paths_by_bucket: dict[str, list[Any]] = {
-        "fast_freedom": [],
-        "compounding_freedom": [],
-        "skill_leverage": [],
-    }
-    for s in scored:
-        paths_by_bucket.setdefault(s.bucket, []).append(s)
+    scored = pack.logic.score(life, research_bundle.data)
+    logger.info("plan.generate scored %d items", len(scored))
 
     plan_prompt = render_template(
         pack.prompt_path("plan"),
-        {
-            "profile": profile,
-            "answers": answers,
-            "questions": _question_views(pack, answers),
-            "life_state": _life_state_view(life),
-            "research_json": _pretty_json(research_bundle.data),
-            "scored_scenarios": scored,
-            "paths_by_bucket": paths_by_bucket,
-            "format_answer": _format_answer,
-            "chat_context": chat_context or "",
-        },
+        pack.logic.build_plan_context(
+            profile=profile,
+            answers=answers,
+            life=life,
+            scored=scored,
+            research_data=research_bundle.data,
+            chat_context=chat_context or "",
+        ),
     )
 
     system_prompt = pack.prompt_path("system").read_text()
@@ -216,20 +202,8 @@ def generate_plan(
             "model_research": settings.pathwise_research_model,
             "sources": research_bundle.sources,
             "research_data": research_bundle.data,
-            "life_state": _life_state_view(life),
-            "scored_scenarios": [
-                {
-                    "id": s.id,
-                    "label": s.label,
-                    "viable": s.viable,
-                    "fails": s.fails,
-                    "momentum": s.momentum,
-                    "cash_flow_monthly": s.cash_flow_monthly,
-                    "buffer_months": s.risk_buffer_months,
-                    "income_monthly": s.income_monthly,
-                }
-                for s in scored
-            ],
+            "life_state": pack.logic.life_state_to_meta(life),
+            "scored_scenarios": pack.logic.scored_to_meta(scored),
             "usage_research": research_bundle.usage,
             "usage_plan": result.usage,
         },
