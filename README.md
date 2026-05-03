@@ -6,7 +6,7 @@ A life-strategy planner for teens. Pathwise turns a formal life-state model into
 
 ## Origin
 
-Pathwise grew out of the essay [**Emma: Build Independence**](https://github.com/buwilliams/buddy-williams-writings/blob/main/fragments/emma-build-independence.md). The current, in-repo source-of-truth for any season's model lives at `src/pathwise/seasons/{season}/revisions/{revision}/model.md` — a formalized conjecture defining the life-state, viability, momentum, fragility, and recoverability math for that revision. The `build-independence` season at its latest revision defines life-state `L = {V, T, A, Y, K, H}` (values, time, assets, income, skills, home-emotional cost). The essay is the wisdom; this repo is the software that makes it usable.
+Pathwise grew out of the essay [**Emma: Build Independence**](https://github.com/buwilliams/buddy-williams-writings/blob/main/fragments/emma-build-independence.md). The current, in-repo source-of-truth for any season's model lives at `src/pathwise/seasons/{season}/revisions/{revision}/model.md` — a formalized conjecture for that revision. The essay is the wisdom; this repo is the software that makes it usable.
 
 ## Concepts
 
