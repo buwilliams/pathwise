@@ -6,24 +6,39 @@ A life-strategy planner for teens. Pathwise turns a formal life-state model into
 
 ## Origin
 
-Pathwise is built on the essay [**Emma: Build Independence**](https://github.com/buwilliams/buddy-williams-writings/blob/main/fragments/emma-build-independence.md) — a formal model of life-state `L = {V, T, M, Y, K}` with viability, momentum, and fragility math, and an "independence ladder" conjecture. The essay is the source of truth for the wisdom; this repo is the software that makes it usable.
+Pathwise grew out of the essay [**Emma: Build Independence**](https://github.com/buwilliams/buddy-williams-writings/blob/main/fragments/emma-build-independence.md). The current, in-repo source-of-truth for the model is `src/pathwise/seasons/build_independence/revisions/v0_4_0/model.md` — a formalized conjecture defining life-state `L = {V, T, A, Y, K, H}` (values, time, assets, income, skills, home-emotional cost) along with viability, momentum, fragility, and recoverability math. The essay is the wisdom; this repo is the software that makes it usable.
+
+## Concepts
+
+- **Season** — a life chapter the planner is built for. Each season has its own questions, scenarios, scoring weights, and prompts. Today: `build-independence` (ages 17–20). Later: marriage, kids, complex finances.
+- **Revision** — a versioned snapshot of a season under `revisions/v<X>_<Y>_<Z>/`. The revision directory is self-contained: `pack.toml`, `questionnaire.json`, `weights.yaml`, `scenarios.yaml`, `prompts/*.md`, `model.md`, and a `logic.py`. New plans always use the latest revision; existing user data stays pinned to whichever revision produced it.
+- **Model** (`model.md`) — the formalized conjecture for that revision. Math, definitions, and tradeoffs. The deterministic core (`life_state.py`, `momentum.py`) operationalizes it.
+- **Questionnaire** (`questionnaire.json`) — a JSON schema with three concerns kept separate: `data_model` (durable contract with the core), `questions` (prompt + UI presentation per field), and `steps` (ordered groups for the wizard). `when` predicates conditionally hide steps and questions based on prior answers. The frontend renders the wizard entirely from this schema.
 
 ## What's here
 
-- **Deterministic core** (`src/pathwise/core/`) — pure-Python math for life-state, viability, momentum, fragility.
-- **Season packs** (`src/pathwise/seasons/`) — pluggable wisdom for a particular life chapter. Each season is versioned by *revision* under `revisions/<rev>/`; new plans always use the latest revision, while existing user data stays pinned to whichever revision produced it. Each revision ships a `questionnaire.json` (data model + question presentation + ordered steps + `when` predicates) that drives the UI dynamically. Today: `build_independence`. Later: marriage, kids, complex finances.
+- **Deterministic core** (`src/pathwise/core/`) — pure-Python math for life-state, viability, momentum, fragility; predicate evaluator; questionnaire schema and service.
+- **Season packs** (`src/pathwise/seasons/`) — one directory per season; revisions live under it.
 - **LLM layer** (`src/pathwise/llm/`) — Claude does grounded research (`web_search`) and final plan synthesis.
-- **Surfaces** — FastAPI (`api/`), Typer CLI (`cli/`), vanilla ES6 frontend (`frontend/`), SMS via Twilio (`sms/`).
+- **Surfaces** — FastAPI (`src/pathwise/api/`), Typer CLI (`src/pathwise/cli/`), vanilla ES6 frontend (`src/pathwise/frontend/`), SMS via Twilio (`src/pathwise/sms/`).
 
 ## Stack
 
-Python 3.12+, uv, FastAPI, Typer, Anthropic SDK, Twilio, Jinja2, Pydantic.
+Python 3.12+, uv, FastAPI, Pydantic, Typer, Anthropic SDK, Twilio, Jinja2, PyYAML. Tests via pytest.
 
 ## Getting started
 
 ```bash
-uv sync
-uv run pathwise --help
-uv run uvicorn pathwise.api.main:app --reload
-uv run pytest
+uv sync                          # install runtime deps
+uv pip install -e .              # editable install (needed for pytest to find the package)
+uv run pathwise --help           # CLI overview
+uv run pathwise serve --reload   # FastAPI + uvicorn on the configured host/port
+uv run pytest                    # full test suite
+```
+
+The CLI groups commands by area: `pathwise user|auth|season|question|answer|plan ...`. Run any group with `--help` to see what's there. To inspect the live questionnaire schema for a season:
+
+```bash
+uv run pathwise season show build-independence
+uv run pathwise question list
 ```
