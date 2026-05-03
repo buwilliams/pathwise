@@ -319,6 +319,15 @@ const views = (() => {
         .map(k => ({ key: k, ...schema.questions[k] }))
         .filter(q => predicate.evaluate(q.when, answers));
     }
+    function isMissing(v) {
+      return v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
+    }
+    function unansweredRequiredOnStep(step) {
+      // `required` defaults to true; only explicit false marks optional.
+      return visibleQuestions(step)
+        .filter(q => q.required !== false && isMissing(answers[q.key]))
+        .map(q => q.key);
+    }
 
     let currentIdx = 0;
     // Track the last index we actually rendered so re-renders triggered by
@@ -381,20 +390,32 @@ const views = (() => {
       }, "Back");
       backBtn.disabled = currentIdx === 0;
 
+      const stepMissing = unansweredRequiredOnStep(step);
       const primaryBtn = isLast
         ? el("button", { class: "btn btn-accent", onclick: onGenerate }, "Generate my plan")
         : el("button", {
             class: "btn",
             onclick: () => { currentIdx += 1; renderStep(); },
           }, "Next");
-      if (isLast) primaryBtn.disabled = !isComplete;
+      // Block forward navigation when this step's required questions are
+      // not yet answered. The final-step button additionally requires the
+      // whole questionnaire to be complete.
+      primaryBtn.disabled = stepMissing.length > 0 || (isLast && !isComplete);
 
       const nav = el("div", {
         class: "btn-row",
         style: "flex-direction: row; gap: var(--space-3); margin-top: var(--space-4);",
       }, backBtn, primaryBtn);
 
-      body.replaceChildren(sectionEl, nav);
+      // When the primary button is disabled because of unanswered
+      // required questions on this step, tell the user why.
+      const hint = stepMissing.length > 0
+        ? el("p", { class: "step-hint" },
+            `Answer the required ${stepMissing.length === 1 ? "question" : `${stepMissing.length} questions`} on this step to continue.`,
+          )
+        : null;
+
+      body.replaceChildren(sectionEl, ...(hint ? [hint] : []), nav);
       // Only scroll on actual step navigation (Next / Back / first render),
       // not on the within-step re-render triggered by an answer change.
       if (currentIdx !== lastRenderedIdx) {

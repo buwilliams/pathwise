@@ -427,6 +427,12 @@
   color: var(--ink);
   margin: var(--space-2) 0 0 0;
 }
+.step-hint {
+  font-size: 0.85rem;
+  color: var(--ink-mute);
+  margin: var(--space-3) 0 0 0;
+  text-align: center;
+}
 
 .plan-row {
   display: flex;
