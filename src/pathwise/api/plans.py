@@ -13,7 +13,8 @@ from pathwise.core.plan import (
     read_plan,
     start_plan_job,
 )
-from pathwise.core.season import latest_revision
+from pathwise.api.seasons import _questionnaire_payload
+from pathwise.core.season import get_pack, latest_revision
 
 router = APIRouter(prefix="/seasons/{season_id}/plans", tags=["plans"])
 
@@ -87,6 +88,28 @@ def show(
     if version not in versions:
         raise HTTPException(status_code=404, detail=f"Plan v{version} not found.")
     return _read(season_id, version, store, user_id)
+
+
+@router.get("/{version}/questionnaire")
+def plan_questionnaire(
+    season_id: str, version: int, store: StoreDep, user_id: CurrentUserId
+) -> dict[str, Any]:
+    """Questionnaire schema pinned to the revision that produced this plan.
+
+    Use this when surfacing past answers against the questionnaire shape
+    they were collected under, so a revision change doesn't silently
+    re-interpret the old answers.
+    """
+    versions = list_plans(user_id, season_id, store)
+    if version not in versions:
+        raise HTTPException(status_code=404, detail=f"Plan v{version} not found.")
+    meta = store.read_json(store.plan_meta_path(user_id, season_id, version))
+    rev = meta.get("pack_version")
+    try:
+        pack = get_pack(season_id, revision=rev)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _questionnaire_payload(pack)
 
 
 def _revision_status(season_id: str, plan_revision: str | None) -> dict[str, Any]:

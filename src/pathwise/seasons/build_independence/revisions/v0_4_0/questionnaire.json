@@ -1,0 +1,310 @@
+{
+  "schema_version": 1,
+  "data_model": {
+    "current_savings":            { "type": "money",      "min": 0 },
+    "current_monthly_take_home":  { "type": "money",      "min": 0 },
+    "current_monthly_bills":      { "type": "money",      "min": 0 },
+    "lives_with_parents":         { "type": "yes_no" },
+    "has_car":                    { "type": "yes_no" },
+
+    "car_purpose":                { "type": "string_set", "values": ["work","school","friends","freedom","privacy","errands"] },
+    "car_max_savings_spend":      { "type": "money",      "min": 0 },
+    "car_repair_1k_reaction":     { "type": "string",     "values": ["fine","stressed","scary","catastrophic"] },
+
+    "emergency_fund_floor":       { "type": "money",      "min": 0 },
+    "monthly_pressure_comfort":   { "type": "string",     "values": ["zero","mild","moderate","high"] },
+
+    "current_job_feeling":        { "type": "string",     "values": ["love","ok","tolerate","hate","none"] },
+    "hours_preference":           { "type": "string",     "values": ["more","same","less"] },
+    "desired_two_year_income":    { "type": "money",      "min": 0 },
+
+    "interested_in_training":     { "type": "yes_no" },
+    "training_modality":          { "type": "string",     "values": ["hands_on","certificate","online","community_college","four_year","not_sure"] },
+    "max_training_months":        { "type": "number",     "min": 0, "max": 60, "unit": "months" },
+    "interests":                  { "type": "string" },
+
+    "move_out_urgency":           { "type": "scale",      "min": 1, "max": 5 },
+    "move_out_horizon":           { "type": "string",     "values": ["now","6mo","1yr","2yr","later"] },
+    "rent_max_share_of_income":   { "type": "number",     "min": 0, "max": 100, "unit": "%" },
+    "home_emotional_cost":        { "type": "string",     "values": ["peaceful","fine","tense","hard"] },
+
+    "productive_hours_per_week":  { "type": "hours",      "min": 0, "max": 80 },
+    "quality_of_time_now":        { "type": "scale",      "min": 1, "max": 5 },
+
+    "top_value":                  { "type": "string",     "values": ["independence","net_worth","enjoyment","goals","stability"] },
+    "one_year_proud_of":          { "type": "string" },
+    "top_fear":                   { "type": "string" }
+  },
+
+  "questions": {
+    "current_savings": {
+      "prompt": "Roughly how much do you have in savings right now?",
+      "help": "Total of checking, savings, cash. Round to the nearest hundred.",
+      "input": { "kind": "money", "min": 0, "placeholder": "1000" }
+    },
+    "current_monthly_take_home": {
+      "prompt": "About how much do you take home each month from work?",
+      "help": "After taxes. If it varies, give a typical month. Put 0 if you don't work right now.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "current_monthly_bills": {
+      "prompt": "About how much do you spend each month on bills and stuff you have to pay?",
+      "help": "Phone, subscriptions, gas, food you buy. Skip rent for now — that comes next.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "lives_with_parents": {
+      "prompt": "Do you currently live with a parent or family member?",
+      "input": { "kind": "yes_no" }
+    },
+    "has_car": {
+      "prompt": "Do you have your own car right now?",
+      "input": { "kind": "yes_no" }
+    },
+
+    "car_purpose": {
+      "prompt": "If you had a car, what would it unlock? (pick any)",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "work",     "label": "Getting to / from work" },
+          { "value": "school",   "label": "School or training" },
+          { "value": "friends",  "label": "Seeing friends" },
+          { "value": "freedom",  "label": "Just freedom to go" },
+          { "value": "privacy",  "label": "Privacy / space" },
+          { "value": "errands",  "label": "Errands and appointments" }
+        ]
+      }
+    },
+    "car_max_savings_spend": {
+      "prompt": "What's the most of your savings you'd feel okay spending on a car?",
+      "help": "Total — purchase price + tax + first insurance payment.",
+      "required": false,
+      "input": { "kind": "money", "min": 0 }
+    },
+    "car_repair_1k_reaction": {
+      "prompt": "If the car needed a $1,000 repair three months after you bought it, how would you feel?",
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "fine",         "label": "Annoying, but fine" },
+          { "value": "stressed",     "label": "Stressed but I'd handle it" },
+          { "value": "scary",        "label": "Scary — would mess me up" },
+          { "value": "catastrophic", "label": "I literally couldn't pay it" }
+        ]
+      }
+    },
+
+    "emergency_fund_floor": {
+      "prompt": "What's the lowest you'd let your savings drop before it would feel scary?",
+      "help": "Your emotional 'don't go below this' line.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "monthly_pressure_comfort": {
+      "prompt": "How much monthly money pressure feels okay to you?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "zero",     "label": "I want zero stress about money each month" },
+          { "value": "mild",     "label": "A little tightness is fine" },
+          { "value": "moderate", "label": "I can handle real pressure if it's worth it" },
+          { "value": "high",     "label": "Bring it on — I'll work harder if I have to" }
+        ]
+      }
+    },
+
+    "current_job_feeling": {
+      "prompt": "How do you feel about your current job?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "love",     "label": "I really like it" },
+          { "value": "ok",       "label": "It's fine for now" },
+          { "value": "tolerate", "label": "I tolerate it for the money" },
+          { "value": "hate",     "label": "I want out" },
+          { "value": "none",     "label": "I don't have one yet" }
+        ]
+      }
+    },
+    "hours_preference": {
+      "prompt": "Right now, do you want to work…",
+      "when": { "current_job_feeling": { "$ne": "none" } },
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "more", "label": "More hours" },
+          { "value": "same", "label": "About the same" },
+          { "value": "less", "label": "Fewer hours" }
+        ]
+      }
+    },
+    "desired_two_year_income": {
+      "prompt": "Two years from now, what monthly income would feel like 'I made it'?",
+      "help": "Take-home, your number. There's no right answer.",
+      "required": false,
+      "input": { "kind": "money", "min": 0 }
+    },
+
+    "interested_in_training": {
+      "prompt": "Are you open to training, school, or a certificate that could raise your income?",
+      "input": { "kind": "yes_no" }
+    },
+    "training_modality": {
+      "prompt": "If you did train, what kind sounds most like you?",
+      "required": false,
+      "when": { "interested_in_training": true },
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "hands_on",          "label": "Hands-on / apprenticeship" },
+          { "value": "certificate",       "label": "Short certificate program" },
+          { "value": "online",            "label": "Online courses" },
+          { "value": "community_college", "label": "Community college" },
+          { "value": "four_year",         "label": "4-year college" },
+          { "value": "not_sure",          "label": "Not sure yet" }
+        ]
+      }
+    },
+    "max_training_months": {
+      "prompt": "How many months of training would you be willing to do?",
+      "when": { "interested_in_training": true },
+      "required": false,
+      "input": { "kind": "number", "min": 0, "max": 60, "unit": "months" }
+    },
+    "interests": {
+      "prompt": "What kinds of work or activities feel interesting to you? (a few words is plenty)",
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. animals, coding, cars, helping people, building stuff" }
+    },
+
+    "move_out_urgency": {
+      "prompt": "How much do you want to move out soon?",
+      "help": "1 = I'm fine where I am. 5 = I need out.",
+      "when": { "lives_with_parents": true },
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "move_out_horizon": {
+      "prompt": "When would you ideally move out?",
+      "when": { "lives_with_parents": true },
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "now",   "label": "As soon as possible" },
+          { "value": "6mo",   "label": "Within 6 months" },
+          { "value": "1yr",   "label": "Within a year" },
+          { "value": "2yr",   "label": "Within 2 years" },
+          { "value": "later", "label": "Whenever it makes sense" }
+        ]
+      }
+    },
+    "rent_max_share_of_income": {
+      "prompt": "What's the most of your monthly income you'd spend on rent?",
+      "help": "As a percentage. (Most experts say 30% is the safe ceiling.)",
+      "required": false,
+      "input": { "kind": "number", "min": 0, "max": 100, "unit": "%" }
+    },
+    "home_emotional_cost": {
+      "prompt": "How does living at home feel right now?",
+      "help": "Staying home is cheaper financially, but not always emotionally — we'd rather know.",
+      "required": false,
+      "when": { "lives_with_parents": true },
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "peaceful", "label": "Peaceful — I have what I need here" },
+          { "value": "fine",     "label": "Fine — some friction but mostly okay" },
+          { "value": "tense",    "label": "Tense — there's pressure I'd like to escape" },
+          { "value": "hard",     "label": "Hard — staying is costing me real wellbeing" }
+        ]
+      }
+    },
+
+    "productive_hours_per_week": {
+      "prompt": "Outside of work or school, how many hours a week feel actually productive for you?",
+      "help": "Not zoned-out tired hours — hours where you can actually do things.",
+      "input": { "kind": "hours", "min": 0, "max": 80 }
+    },
+    "quality_of_time_now": {
+      "prompt": "Right now, how good is the quality of your free time and energy?",
+      "help": "1 = drained and scattered. 5 = rested and ready.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+
+    "top_value": {
+      "prompt": "Of these, which feels most important to you right now?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "independence", "label": "Independence — running my own life" },
+          { "value": "net_worth",    "label": "Building savings and net worth" },
+          { "value": "enjoyment",    "label": "Enjoying life and friends" },
+          { "value": "goals",        "label": "Making real progress on goals" },
+          { "value": "stability",    "label": "Feeling safe and stable" }
+        ]
+      }
+    },
+    "one_year_proud_of": {
+      "prompt": "A year from now, what would you love to be able to say you did?",
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. saved $5k, finished a course, moved out, learned to drive" }
+    },
+    "top_fear": {
+      "prompt": "What's the thing you most want to avoid happening in the next year?",
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. broke, stuck, working a job I hate, drifting" }
+    }
+  },
+
+  "steps": [
+    {
+      "id": "now",
+      "title": "Where you are now",
+      "blurb": "Quick snapshot. We're not judging — we're getting honest numbers so the plan is real.",
+      "questions": [
+        "current_savings",
+        "current_monthly_take_home",
+        "current_monthly_bills",
+        "lives_with_parents",
+        "has_car"
+      ]
+    },
+    {
+      "id": "car",
+      "title": "About a car",
+      "blurb": "A car can unlock a lot. It can also drain a lot.",
+      "questions": ["car_purpose", "car_max_savings_spend", "car_repair_1k_reaction"]
+    },
+    {
+      "id": "money",
+      "title": "Money comfort",
+      "blurb": "How much pressure feels okay, and where your floor is.",
+      "questions": ["emergency_fund_floor", "monthly_pressure_comfort"]
+    },
+    {
+      "id": "work",
+      "title": "Work and income",
+      "questions": ["current_job_feeling", "hours_preference", "desired_two_year_income"]
+    },
+    {
+      "id": "skills",
+      "title": "Skills and what's next",
+      "questions": ["interested_in_training", "training_modality", "max_training_months", "interests"]
+    },
+    {
+      "id": "move",
+      "title": "About moving out",
+      "questions": ["move_out_urgency", "move_out_horizon", "rent_max_share_of_income", "home_emotional_cost"]
+    },
+    {
+      "id": "life",
+      "title": "Life and energy",
+      "questions": ["productive_hours_per_week", "quality_of_time_now"]
+    },
+    {
+      "id": "future",
+      "title": "Future you",
+      "questions": ["top_value", "one_year_proud_of", "top_fear"]
+    }
+  ]
+}

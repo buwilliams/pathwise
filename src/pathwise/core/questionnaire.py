@@ -4,7 +4,8 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from pathwise.core.season import Question, SeasonPack
+from pathwise.core.questionnaire_schema import DataField, Question, Questionnaire
+from pathwise.core.season import SeasonPack
 from pathwise.core.store import FileStore
 
 
@@ -40,14 +41,22 @@ class AnswerValidationError(ValueError):
     pass
 
 
-def coerce_answer(question: Question, raw: Any) -> Any:
-    """Validate and coerce a raw answer value against its question's type."""
+def coerce_answer(
+    key: str, field: DataField, question: Question, raw: Any
+) -> Any:
+    """Validate and coerce a raw answer value against its data-model type.
+
+    The data-model type is the source of truth; ``question.input.kind`` only
+    decides UI rendering. Bounds (min/max) are pulled from the data field —
+    UI overrides on the question's input are presentational only.
+    """
     if raw is None or raw == "":
         if question.required:
-            raise AnswerValidationError(f"{question.key}: required")
+            raise AnswerValidationError(f"{key}: required")
         return None
 
-    t = question.type
+    t = field.type
+
     if t == "yes_no":
         if isinstance(raw, bool):
             return raw
@@ -55,53 +64,71 @@ def coerce_answer(question: Question, raw: Any) -> Any:
             return True
         if isinstance(raw, str) and raw.lower() in ("no", "n", "false", "0"):
             return False
-        raise AnswerValidationError(f"{question.key}: expected yes/no")
+        raise AnswerValidationError(f"{key}: expected yes/no")
 
     if t in ("number", "money", "hours", "scale"):
         try:
             value = float(raw)
         except (TypeError, ValueError) as exc:
-            raise AnswerValidationError(f"{question.key}: expected number") from exc
-        if question.min is not None and value < question.min:
-            raise AnswerValidationError(
-                f"{question.key}: must be >= {question.min}"
-            )
-        if question.max is not None and value > question.max:
-            raise AnswerValidationError(
-                f"{question.key}: must be <= {question.max}"
-            )
-        # money / scale stored as int when exact
+            raise AnswerValidationError(f"{key}: expected number") from exc
+        if field.min is not None and value < field.min:
+            raise AnswerValidationError(f"{key}: must be >= {field.min}")
+        if field.max is not None and value > field.max:
+            raise AnswerValidationError(f"{key}: must be <= {field.max}")
         if value.is_integer():
             return int(value)
         return value
 
-    if t == "single_choice":
-        valid = {o.value for o in (question.options or [])}
-        if raw not in valid:
+    if t == "string":
+        if not isinstance(raw, str):
+            raise AnswerValidationError(f"{key}: expected text")
+        coerced = raw.strip()
+        if field.values is not None and coerced not in field.values:
             raise AnswerValidationError(
-                f"{question.key}: must be one of {sorted(valid)}"
+                f"{key}: must be one of {sorted(field.values)}"
             )
-        return raw
+        return coerced
 
-    if t == "multi_choice":
+    if t == "string_set":
         if isinstance(raw, str):
             raw = [raw]
         if not isinstance(raw, list):
-            raise AnswerValidationError(f"{question.key}: expected list")
-        valid = {o.value for o in (question.options or [])}
-        for v in raw:
-            if v not in valid:
-                raise AnswerValidationError(
-                    f"{question.key}: invalid choice {v!r}; must be subset of {sorted(valid)}"
-                )
+            raise AnswerValidationError(f"{key}: expected list")
+        if field.values is not None:
+            allowed = set(field.values)
+            for v in raw:
+                if v not in allowed:
+                    raise AnswerValidationError(
+                        f"{key}: invalid choice {v!r}; must be subset of "
+                        f"{sorted(allowed)}"
+                    )
         return list(raw)
 
-    if t == "text":
-        if not isinstance(raw, str):
-            raise AnswerValidationError(f"{question.key}: expected text")
-        return raw.strip()
+    raise AnswerValidationError(f"{key}: unknown data type {t!r}")
 
-    raise AnswerValidationError(f"{question.key}: unknown question type {t!r}")
+
+def _missing(value: Any) -> bool:
+    return value in (None, "", [])
+
+
+def _compute_completion(
+    questionnaire: Questionnaire, answers: dict[str, Any]
+) -> CompletionStatus:
+    required = questionnaire.required_keys(answers)
+    visible = questionnaire.visible_question_keys(answers)
+    missing = sorted(k for k in required if _missing(answers.get(k)))
+    optional_total = len(visible) - len(required)
+    answered = sum(
+        1
+        for k in visible
+        if not _missing(answers.get(k))
+    )
+    return CompletionStatus(
+        answered=answered,
+        required_total=len(required),
+        optional_total=max(optional_total, 0),
+        missing_required=missing,
+    )
 
 
 class QuestionnaireService:
@@ -110,6 +137,14 @@ class QuestionnaireService:
 
     def get_answers(self, user_id: str, season_id: str) -> dict[str, Any]:
         return self.store.read_json(self.store.answers_path(user_id, season_id))
+
+    def _coerce(self, pack: SeasonPack, key: str, raw: Any) -> Any:
+        q = pack.questionnaire
+        if key not in q.data_model:
+            raise AnswerValidationError(f"{key}: not in data model")
+        if key not in q.questions:
+            raise AnswerValidationError(f"{key}: not asked in this revision")
+        return coerce_answer(key, q.data_model[key], q.questions[key], raw)
 
     def set_answer(
         self,
@@ -120,8 +155,7 @@ class QuestionnaireService:
         *,
         now: float | None = None,
     ) -> Any:
-        question = pack.question(key)  # KeyError if unknown
-        coerced = coerce_answer(question, raw_value)
+        coerced = self._coerce(pack, key, raw_value)
         now = now if now is not None else time.time()
 
         current = self.get_answers(user_id, pack.id)
@@ -145,11 +179,10 @@ class QuestionnaireService:
         *,
         now: float | None = None,
     ) -> dict[str, Any]:
-        # Validate all up front before writing any
+        # Validate all up front before writing any.
         coerced: dict[str, Any] = {}
         for key, raw in values.items():
-            question = pack.question(key)
-            coerced[key] = coerce_answer(question, raw)
+            coerced[key] = self._coerce(pack, key, raw)
 
         now = now if now is not None else time.time()
         current = self.get_answers(user_id, pack.id)
@@ -168,12 +201,4 @@ class QuestionnaireService:
 
     def completion(self, user_id: str, pack: SeasonPack) -> CompletionStatus:
         answers = self.get_answers(user_id, pack.id)
-        required = pack.required_keys()
-        missing = sorted(k for k in required if answers.get(k) in (None, "", []))
-        optional_total = len(pack.questions) - len(required)
-        return CompletionStatus(
-            answered=sum(1 for v in answers.values() if v not in (None, "", [])),
-            required_total=len(required),
-            optional_total=optional_total,
-            missing_required=missing,
-        )
+        return _compute_completion(pack.questionnaire, answers)

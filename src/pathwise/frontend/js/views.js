@@ -294,22 +294,32 @@ const views = (() => {
     );
   }
 
-  // ───────── Questionnaire (one section per step) ─────────
-  function questionnaire(pack, answers, completion, onAnswer, onGenerate) {
+  // ───────── Questionnaire (schema-driven, conditional, one step per page) ─────────
+  function questionnaire(schema, answers, completion, onAnswer, onGenerate) {
     const root = el("div", {});
-    const sections = pack.sections.filter(sec =>
-      pack.questions.some(q => q.section === sec.id)
-    );
-    const totalSteps = sections.length;
-    let currentIdx = 0;
     let isComplete = !!completion.is_complete;
-
-    const stepLabel = el("p", { class: "progress-label", style: "margin-bottom: var(--space-2);" }, "");
-    const progressBar = el("span", { style: `width: ${completion.percent}%` });
     let currentPct = completion.percent;
 
+    // Visible steps depend on the current answers (a step's `when` may
+    // hide it once answers come in). Recompute on every answer change.
+    function visibleSteps() {
+      return schema.steps.filter(s => predicate.evaluate(s.when, answers));
+    }
+    function visibleQuestions(step) {
+      return step.questions
+        .map(k => ({ key: k, ...schema.questions[k] }))
+        .filter(q => predicate.evaluate(q.when, answers));
+    }
+
+    let currentIdx = 0;
+
+    const stepLabel = el("p", { class: "progress-label", style: "margin-bottom: var(--space-2);" }, "");
+    const progressBar = el("span", { style: `width: ${currentPct}%` });
+
     function updateStepLabel() {
-      stepLabel.textContent = `Step ${currentIdx + 1} of ${totalSteps} (${currentPct}%)`;
+      const total = visibleSteps().length;
+      const idx = Math.min(currentIdx, Math.max(total - 1, 0));
+      stepLabel.textContent = `Step ${idx + 1} of ${total} (${currentPct}%)`;
     }
     function setProgress(pct) {
       currentPct = pct;
@@ -326,23 +336,30 @@ const views = (() => {
     root.appendChild(body);
 
     function renderStep() {
-      const sec = sections[currentIdx];
-      const isLast = currentIdx === totalSteps - 1;
+      const steps = visibleSteps();
+      if (currentIdx >= steps.length) currentIdx = Math.max(steps.length - 1, 0);
+      const step = steps[currentIdx];
+      const isLast = currentIdx === steps.length - 1;
       updateStepLabel();
 
-      const sectionQs = pack.questions.filter(q => q.section === sec.id);
-      const sectionEl = card(
-        el("h2", {}, sec.title),
-        sec.blurb && el("p", { class: "section-blurb" }, sec.blurb),
-        ...sectionQs.map(q => questionField(q, answers[q.key], async (val) => {
+      const fields = visibleQuestions(step).map(q =>
+        questionField(q, schema.data_model[q.key], answers[q.key], async (val) => {
           try {
             const res = await onAnswer(q.key, val);
             answers[q.key] = res.answers[q.key];
             isComplete = !!res.completion.is_complete;
             setProgress(res.completion.percent);
-            if (isLast) primaryBtn.disabled = !isComplete;
+            // An answer change can show or hide other questions in this
+            // step (or other steps). Cheapest correct behavior: re-render.
+            renderStep();
           } catch (e) { toast(e.message, "error"); }
-        })),
+        })
+      );
+
+      const sectionEl = card(
+        el("h2", {}, step.title),
+        step.blurb && el("p", { class: "section-blurb" }, step.blurb),
+        ...fields,
       );
 
       const backBtn = el("button", {
@@ -372,15 +389,23 @@ const views = (() => {
     return root;
   }
 
-  function questionField(q, currentValue, onChange) {
-    // Only `text` and the numeric variants render a single input we can
-    // associate with via for=. Group-style answers (single_choice,
-    // multi_choice, yes_no, scale) get a non-label heading so we don't emit
-    // an orphan <label for> that points at no element.
+  // Widget registry. Adding a new input.kind is one entry here.
+  // Each renderer takes the merged `q` (with `key`, `prompt`, `help`,
+  // `required`, `input`), the data_model `field` for bounds/values,
+  // the current value, and an onChange callback. It returns the inner
+  // input element(s) to append into the field wrapper.
+  const INPUTS = {};
+
+  function registerInput(kind, render) { INPUTS[kind] = render; }
+
+  function questionField(q, field, currentValue, onChange) {
+    const kind = q.input.kind;
     const labelText = q.prompt + (q.required ? "" : "  (optional)");
-    const labelHasMatchingInput =
-      q.type === "text" || q.type === "number" ||
-      q.type === "money" || q.type === "hours";
+    // Single-input widgets render a labeled <label for=...>. Group-style
+    // widgets (choice, scale, yes_no) use a non-label heading to avoid
+    // orphan <label for> pointing at no specific element.
+    const labelHasMatchingInput = kind === "text" || kind === "number" ||
+      kind === "money" || kind === "hours";
     const fieldAttrs = labelHasMatchingInput
       ? { class: "field" }
       : { class: "field", role: "group", "aria-labelledby": `qlabel-${q.key}` };
@@ -391,110 +416,137 @@ const views = (() => {
       q.help && el("p", { class: "help" }, q.help),
     );
 
-    if (q.type === "single_choice") {
-      const list = el("div", { class: "choice-list" });
-      for (const opt of q.options) {
-        const item = el("label", { class: "choice-item" + (currentValue === opt.value ? " selected" : "") },
-          el("input", {
-            type: "radio", name: q.key, value: opt.value,
-            checked: currentValue === opt.value,
-            onchange: () => {
-              list.querySelectorAll(".choice-item").forEach(c => c.classList.remove("selected"));
-              item.classList.add("selected");
-              onChange(opt.value);
-            },
-          }),
-          el("span", { class: "label" }, opt.label),
-        );
-        list.appendChild(item);
-      }
-      wrap.appendChild(list);
-    } else if (q.type === "multi_choice") {
-      const list = el("div", { class: "choice-list" });
-      const selected = new Set(currentValue || []);
-      for (const opt of q.options) {
-        const item = el("label", { class: "choice-item" + (selected.has(opt.value) ? " selected" : "") },
-          el("input", {
-            type: "checkbox", value: opt.value,
-            checked: selected.has(opt.value),
-            onchange: (e) => {
-              if (e.target.checked) selected.add(opt.value); else selected.delete(opt.value);
-              item.classList.toggle("selected", e.target.checked);
-              onChange(Array.from(selected));
-            },
-          }),
-          el("span", { class: "label" }, opt.label),
-        );
-        list.appendChild(item);
-      }
-      wrap.appendChild(list);
-    } else if (q.type === "yes_no") {
-      const list = el("div", { class: "choice-list" });
-      for (const [val, label] of [[true, "Yes"], [false, "No"]]) {
-        const item = el("label", { class: "choice-item" + (currentValue === val ? " selected" : "") },
-          el("input", {
-            type: "radio", name: q.key, checked: currentValue === val,
-            onchange: () => {
-              list.querySelectorAll(".choice-item").forEach(c => c.classList.remove("selected"));
-              item.classList.add("selected");
-              onChange(val);
-            },
-          }),
-          el("span", { class: "label" }, label),
-        );
-        list.appendChild(item);
-      }
-      wrap.appendChild(list);
-    } else if (q.type === "scale") {
-      const min = q.min || 1, max = q.max || 5;
-      const row = el("div", { class: "scale-row" });
-      row.appendChild(el("span", { class: "scale-end" }, "Low"));
-      for (let v = min; v <= max; v++) {
-        const btn = el("button", {
-          type: "button",
-          class: "scale-btn" + (currentValue === v ? " selected" : ""),
-          onclick: () => {
-            row.querySelectorAll(".scale-btn").forEach(b => b.classList.remove("selected"));
-            btn.classList.add("selected");
-            onChange(v);
-          },
-        }, String(v));
-        row.appendChild(btn);
-      }
-      row.appendChild(el("span", { class: "scale-end" }, "High"));
-      wrap.appendChild(row);
-    } else if (q.type === "text") {
-      const ta = el("textarea", {
-        id: `q-${q.key}`, rows: "2", placeholder: q.placeholder || "",
-        oninput: (e) => onChangeDebounced(e.target.value),
-      });
-      if (currentValue) ta.value = currentValue;
-      wrap.appendChild(ta);
-      let timer;
-      function onChangeDebounced(v) {
-        clearTimeout(timer);
-        timer = setTimeout(() => onChange(v), 600);
-      }
-    } else { // number, money, hours
-      const prefix = q.type === "money" ? "$" : "";
-      const suffix = q.unit ? ` ${q.unit}` : "";
-      const input = el("input", {
-        id: `q-${q.key}`, type: "number", inputmode: "decimal",
-        min: q.min, max: q.max,
-        placeholder: prefix + (q.type === "money" ? "1000" : "") + suffix,
-        oninput: (e) => onChangeDebounced(e.target.value),
-      });
-      if (currentValue !== undefined && currentValue !== null) input.value = currentValue;
-      wrap.appendChild(input);
-      let timer;
-      function onChangeDebounced(v) {
-        clearTimeout(timer);
-        if (v === "") return;
-        timer = setTimeout(() => onChange(v), 500);
-      }
+    const renderer = INPUTS[kind];
+    if (!renderer) {
+      wrap.appendChild(el("p", { class: "help" }, `Unsupported input kind: ${kind}`));
+      return wrap;
     }
+    renderer({ q, field, currentValue, onChange, wrap });
     return wrap;
   }
+
+  // ─── Input widget registrations ───
+
+  registerInput("single_choice", ({ q, currentValue, onChange, wrap }) => {
+    const list = el("div", { class: "choice-list" });
+    for (const opt of q.input.options) {
+      const item = el("label", { class: "choice-item" + (currentValue === opt.value ? " selected" : "") },
+        el("input", {
+          type: "radio", name: q.key, value: opt.value,
+          checked: currentValue === opt.value,
+          onchange: () => {
+            list.querySelectorAll(".choice-item").forEach(c => c.classList.remove("selected"));
+            item.classList.add("selected");
+            onChange(opt.value);
+          },
+        }),
+        el("span", { class: "label" }, opt.label),
+      );
+      list.appendChild(item);
+    }
+    wrap.appendChild(list);
+  });
+
+  registerInput("multi_choice", ({ q, currentValue, onChange, wrap }) => {
+    const list = el("div", { class: "choice-list" });
+    const selected = new Set(currentValue || []);
+    for (const opt of q.input.options) {
+      const item = el("label", { class: "choice-item" + (selected.has(opt.value) ? " selected" : "") },
+        el("input", {
+          type: "checkbox", value: opt.value,
+          checked: selected.has(opt.value),
+          onchange: (e) => {
+            if (e.target.checked) selected.add(opt.value); else selected.delete(opt.value);
+            item.classList.toggle("selected", e.target.checked);
+            onChange(Array.from(selected));
+          },
+        }),
+        el("span", { class: "label" }, opt.label),
+      );
+      list.appendChild(item);
+    }
+    wrap.appendChild(list);
+  });
+
+  registerInput("yes_no", ({ q, currentValue, onChange, wrap }) => {
+    const list = el("div", { class: "choice-list" });
+    for (const [val, label] of [[true, "Yes"], [false, "No"]]) {
+      const item = el("label", { class: "choice-item" + (currentValue === val ? " selected" : "") },
+        el("input", {
+          type: "radio", name: q.key, checked: currentValue === val,
+          onchange: () => {
+            list.querySelectorAll(".choice-item").forEach(c => c.classList.remove("selected"));
+            item.classList.add("selected");
+            onChange(val);
+          },
+        }),
+        el("span", { class: "label" }, label),
+      );
+      list.appendChild(item);
+    }
+    wrap.appendChild(list);
+  });
+
+  registerInput("scale", ({ q, field, currentValue, onChange, wrap }) => {
+    const min = q.input.min ?? field.min ?? 1;
+    const max = q.input.max ?? field.max ?? 5;
+    const row = el("div", { class: "scale-row" });
+    row.appendChild(el("span", { class: "scale-end" }, "Low"));
+    for (let v = min; v <= max; v++) {
+      const btn = el("button", {
+        type: "button",
+        class: "scale-btn" + (currentValue === v ? " selected" : ""),
+        onclick: () => {
+          row.querySelectorAll(".scale-btn").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          onChange(v);
+        },
+      }, String(v));
+      row.appendChild(btn);
+    }
+    row.appendChild(el("span", { class: "scale-end" }, "High"));
+    wrap.appendChild(row);
+  });
+
+  registerInput("text", ({ q, currentValue, onChange, wrap }) => {
+    const ta = el("textarea", {
+      id: `q-${q.key}`, rows: "2", placeholder: q.input.placeholder || "",
+      oninput: (e) => onChangeDebounced(e.target.value),
+    });
+    if (currentValue) ta.value = currentValue;
+    wrap.appendChild(ta);
+    let timer;
+    function onChangeDebounced(v) {
+      clearTimeout(timer);
+      timer = setTimeout(() => onChange(v), 600);
+    }
+  });
+
+  function renderNumeric({ q, field, currentValue, onChange, wrap }) {
+    const kind = q.input.kind;
+    const min = q.input.min ?? field.min;
+    const max = q.input.max ?? field.max;
+    const unit = q.input.unit ?? field.unit ?? "";
+    const prefix = kind === "money" ? "$" : "";
+    const suffix = unit ? ` ${unit}` : "";
+    const input = el("input", {
+      id: `q-${q.key}`, type: "number", inputmode: "decimal",
+      min, max,
+      placeholder: q.input.placeholder ?? (prefix + (kind === "money" ? "1000" : "") + suffix),
+      oninput: (e) => onChangeDebounced(e.target.value),
+    });
+    if (currentValue !== undefined && currentValue !== null) input.value = currentValue;
+    wrap.appendChild(input);
+    let timer;
+    function onChangeDebounced(v) {
+      clearTimeout(timer);
+      if (v === "") return;
+      timer = setTimeout(() => onChange(v), 500);
+    }
+  }
+  registerInput("money", renderNumeric);
+  registerInput("number", renderNumeric);
+  registerInput("hours", renderNumeric);
 
   // ───────── Plan ─────────
   function revisionBanner(revisionStatus) {

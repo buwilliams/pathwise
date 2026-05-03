@@ -310,12 +310,12 @@
   // ───────── Questionnaire ─────────
   async function showQuestionnaire(me, seasonId) {
     show(views.loading("Loading your questions…"));
-    const [pack, current] = await Promise.all([
-      api.questions(seasonId),
+    const [schema, current] = await Promise.all([
+      api.questionnaire(seasonId),
       api.getAnswers(seasonId),
     ]);
     const node = views.questionnaire(
-      pack,
+      schema,
       current.answers,
       current.completion,
       async (key, value) => {

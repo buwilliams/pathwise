@@ -28,14 +28,12 @@ def _write_pack(rev_dir: Path, pack_id: str, version: str) -> None:
             """
         ).strip()
     )
-    (rev_dir / "questions.yaml").write_text(
-        "sections: []\n"
-        "questions:\n"
-        "  - key: q1\n"
-        "    prompt: 'a question'\n"
-        "    type: text\n"
-        "    section: s\n"
-        "    required: false\n"
+    (rev_dir / "questionnaire.json").write_text(
+        '{"schema_version": 1,'
+        ' "data_model": {"q1": {"type": "string"}},'
+        ' "questions": {"q1": {"prompt": "a question", "required": false,'
+        ' "input": {"kind": "text"}}},'
+        ' "steps": [{"id": "s", "title": "S", "questions": ["q1"]}]}'
     )
     (rev_dir / "weights.yaml").write_text("weights: {c: 1, s: 1}\n")
     (rev_dir / "scenarios.yaml").write_text(

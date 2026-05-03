@@ -15,7 +15,7 @@ def test_default_pack_loads() -> None:
     assert pack.id == "build-independence"
     assert pack.name
     assert pack.summary
-    assert pack.questions
+    assert pack.questionnaire.questions
     assert pack.scenarios
     assert pack.weights["c"] == 4  # cash flow weight from the model
     assert pack.weights["s"] == 4  # stability weight
@@ -23,14 +23,15 @@ def test_default_pack_loads() -> None:
 
 def test_questions_have_required_fields() -> None:
     pack = get_pack("build-independence")
-    keys = pack.question_keys()
+    qn = pack.questionnaire
+    keys = list(qn.questions)
     assert len(keys) == len(set(keys)), "duplicate question keys"
-    for q in pack.questions:
-        assert q.key
+    for qkey, q in qn.questions.items():
         assert q.prompt
-        assert q.section
-        if q.type in ("single_choice", "multi_choice"):
-            assert q.options, f"{q.key} needs options"
+        # Every question must have a matching data_model entry — schema enforces this.
+        assert qkey in qn.data_model
+        if q.input.kind in ("single_choice", "multi_choice"):
+            assert q.input.options, f"{qkey} needs options"
 
 
 def test_scenarios_match_model() -> None:
@@ -63,11 +64,11 @@ def test_list_packs_finds_default() -> None:
 
 def test_revision_api() -> None:
     revs = list_revisions("build-independence")
-    assert "0.3.0" in revs
-    assert latest_revision("build-independence") == "0.3.0"
-    pack = get_pack("build-independence", revision="0.3.0")
-    assert pack.revision == "0.3.0"
-    assert pack.version == "0.3.0"
+    assert "0.4.0" in revs
+    assert latest_revision("build-independence") == "0.4.0"
+    pack = get_pack("build-independence", revision="0.4.0")
+    assert pack.revision == "0.4.0"
+    assert pack.version == "0.4.0"
 
 
 def test_unknown_revision_raises() -> None:

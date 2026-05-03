@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -9,44 +10,7 @@ from typing import Any, Literal
 
 import yaml
 
-QuestionType = Literal[
-    "single_choice",
-    "multi_choice",
-    "number",
-    "money",
-    "hours",
-    "scale",
-    "yes_no",
-    "text",
-]
-
-
-@dataclass
-class QuestionOption:
-    value: str
-    label: str
-
-
-@dataclass
-class Question:
-    key: str
-    prompt: str
-    type: QuestionType
-    section: str
-    required: bool = True
-    help: str | None = None
-    options: list[QuestionOption] | None = None
-    min: float | None = None
-    max: float | None = None
-    unit: str | None = None
-    placeholder: str | None = None
-
-
-@dataclass
-class Section:
-    id: str
-    title: str
-    blurb: str | None = None
+from pathwise.core.questionnaire_schema import Questionnaire
 
 
 @dataclass
@@ -72,8 +36,7 @@ class SeasonPack:
     summary: str
     version: str
     pack_dir: Path
-    sections: list[Section]
-    questions: list[Question]
+    questionnaire: Questionnaire
     weights: dict[str, float]
     scenarios: list[Scenario]
     prompts_dir: Path
@@ -84,18 +47,6 @@ class SeasonPack:
     def revision(self) -> str:
         return self.version
 
-    def question(self, key: str) -> Question:
-        for q in self.questions:
-            if q.key == key:
-                return q
-        raise KeyError(key)
-
-    def question_keys(self) -> list[str]:
-        return [q.key for q in self.questions]
-
-    def required_keys(self) -> set[str]:
-        return {q.key for q in self.questions if q.required}
-
     def prompt_path(self, name: str) -> Path:
         return self.prompts_dir / f"{name}.md"
 
@@ -103,6 +54,12 @@ class SeasonPack:
 def _load_yaml(path: Path) -> Any:
     with open(path) as f:
         return yaml.safe_load(f)
+
+
+def _load_questionnaire(path: Path) -> Questionnaire:
+    with open(path) as f:
+        raw = json.load(f)
+    return Questionnaire.model_validate(raw)
 
 
 def load_pack(pack_dir: Path) -> SeasonPack:
@@ -115,16 +72,7 @@ def load_pack(pack_dir: Path) -> SeasonPack:
 
     pack_meta = meta["pack"]
 
-    questions_raw = _load_yaml(pack_dir / "questions.yaml")
-    sections = [Section(**s) for s in questions_raw.get("sections", [])]
-    questions: list[Question] = []
-    for q in questions_raw["questions"]:
-        opts = q.pop("options", None)
-        question = Question(
-            **{**q, "options": [QuestionOption(**o) for o in opts] if opts else None}
-        )
-        questions.append(question)
-
+    questionnaire = _load_questionnaire(pack_dir / "questionnaire.json")
     weights = _load_yaml(pack_dir / "weights.yaml")["weights"]
     scenarios = [Scenario(**s) for s in _load_yaml(pack_dir / "scenarios.yaml")["scenarios"]]
 
@@ -134,8 +82,7 @@ def load_pack(pack_dir: Path) -> SeasonPack:
         summary=pack_meta["summary"],
         version=pack_meta["version"],
         pack_dir=pack_dir,
-        sections=sections,
-        questions=questions,
+        questionnaire=questionnaire,
         weights=weights,
         scenarios=scenarios,
         prompts_dir=pack_dir / "prompts",
@@ -198,12 +145,6 @@ def get_pack(season_id: str, revision: str | None = None) -> SeasonPack:
 
 @dataclass
 class SeasonSummary:
-    """Lightweight view of a season's *latest* revision plus its history.
-
-    Returned by ``list_seasons``. We don't pre-load every revision's pack
-    because that would do a lot of yaml parsing for a list view.
-    """
-
     id: str
     name: str
     summary: str
@@ -212,7 +153,6 @@ class SeasonSummary:
     available_revisions: list[str]
     age_min: int | None
     age_max: int | None
-    sections: list[Section] = field(default_factory=list)
 
 
 def packs_root() -> Path:
@@ -259,7 +199,6 @@ def list_seasons(seasons_root: Path | None = None) -> list[SeasonSummary]:
                 available_revisions=revs,
                 age_min=pack.age_min,
                 age_max=pack.age_max,
-                sections=pack.sections,
             )
         )
     return out

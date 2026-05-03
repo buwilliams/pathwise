@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import asdict
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -29,6 +28,25 @@ def _pack_summary(p: SeasonPack) -> dict[str, Any]:
     }
 
 
+def _questionnaire_payload(p: SeasonPack) -> dict[str, Any]:
+    """Full schema as JSON. The frontend renders the questionnaire entirely
+    from this — no per-revision client logic."""
+    q = p.questionnaire
+    return {
+        "season_id": p.id,
+        "revision": p.revision,
+        "schema_version": q.schema_version,
+        "data_model": {
+            k: f.model_dump(exclude_none=True) for k, f in q.data_model.items()
+        },
+        "questions": {
+            k: question.model_dump(exclude_none=True)
+            for k, question in q.questions.items()
+        },
+        "steps": [s.model_dump(exclude_none=True) for s in q.steps],
+    }
+
+
 @router.get("")
 def list_all() -> list[dict[str, Any]]:
     return [
@@ -52,36 +70,17 @@ def show(season_id: str) -> dict[str, Any]:
         p = get_pack(season_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return {**_pack_summary(p), "sections": [asdict(s) for s in p.sections]}
+    return {**_pack_summary(p), "step_count": len(p.questionnaire.steps)}
 
 
-@router.get("/{season_id}/questions")
-def questions(season_id: str) -> dict[str, Any]:
+@router.get("/{season_id}/questionnaire")
+def questionnaire(season_id: str) -> dict[str, Any]:
+    """Latest revision's full questionnaire schema."""
     try:
         p = get_pack(season_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return {
-        "season_id": p.id,
-        "revision": p.revision,
-        "sections": [asdict(s) for s in p.sections],
-        "questions": [
-            {
-                "key": q.key,
-                "section": q.section,
-                "type": q.type,
-                "prompt": q.prompt,
-                "help": q.help,
-                "required": q.required,
-                "options": [asdict(o) for o in q.options] if q.options else None,
-                "min": q.min,
-                "max": q.max,
-                "unit": q.unit,
-                "placeholder": q.placeholder,
-            }
-            for q in p.questions
-        ],
-    }
+    return _questionnaire_payload(p)
 
 
 @router.get("/{season_id}/revision")

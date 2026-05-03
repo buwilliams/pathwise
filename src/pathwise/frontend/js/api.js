@@ -50,7 +50,7 @@ const api = (() => {
     deleteMe:                    () => request("DELETE", "/me"),
     seasons:                     () => request("GET", "/seasons"),
     mySeasons:                   () => request("GET", "/me/seasons"),
-    questions: (seasonId)      => request("GET", `/seasons/${seasonId}/questions`),
+    questionnaire: (seasonId)  => request("GET", `/seasons/${seasonId}/questionnaire`),
     getAnswers: (seasonId)     => request("GET", `/seasons/${seasonId}/answers`),
     putAnswers: (seasonId, a)  => request("PUT", `/seasons/${seasonId}/answers`, { answers: a }),
     generatePlan: (seasonId)   => request("POST", `/seasons/${seasonId}/plans`),

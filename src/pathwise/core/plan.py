@@ -56,7 +56,11 @@ class GeneratedPlan:
 
 
 def _format_answer(question: Any, value: Any) -> str:
-    """Pretty-print an answer value for display in a prompt."""
+    """Pretty-print an answer value for display in a prompt.
+
+    ``question`` is a ``QuestionView`` (see ``_question_views``) — a flat
+    record carrying ``key``, ``prompt``, and the data-model ``type``.
+    """
     if value is True:
         return "yes"
     if value is False:
@@ -66,6 +70,36 @@ def _format_answer(question: Any, value: Any) -> str:
     if question.type == "money":
         return f"${value:,}"
     return str(value)
+
+
+@dataclass
+class QuestionView:
+    """Flat view of one question for the plan-prompt template.
+
+    Carries just what the template iterates: ``key``, ``prompt``, and
+    ``type`` (data-model type). Built from the new questionnaire schema
+    so the template doesn't have to know about ``data_model`` /
+    ``questions`` / ``steps``.
+    """
+
+    key: str
+    prompt: str
+    type: str
+
+
+def _question_views(pack: Any, answers: dict[str, Any]) -> list[QuestionView]:
+    q = pack.questionnaire
+    out: list[QuestionView] = []
+    for step in q.steps:
+        for qkey in step.questions:
+            if qkey not in q.questions:
+                continue
+            out.append(QuestionView(
+                key=qkey,
+                prompt=q.questions[qkey].prompt,
+                type=q.data_model[qkey].type,
+            ))
+    return out
 
 
 def generate_plan(
@@ -149,7 +183,7 @@ def generate_plan(
         {
             "profile": profile,
             "answers": answers,
-            "questions": pack.questions,
+            "questions": _question_views(pack, answers),
             "life_state": _life_state_view(life),
             "research_json": _pretty_json(research_bundle.data),
             "scored_scenarios": scored,

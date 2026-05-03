@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from types import ModuleType
 
-from pathwise.seasons.build_independence.revisions import v0_3_0
+from pathwise.seasons.build_independence.revisions import v0_4_0
 
 
 def _semver_key(rev: str) -> tuple[int, ...]:
@@ -20,7 +20,7 @@ def _semver_key(rev: str) -> tuple[int, ...]:
 
 
 revisions: dict[str, ModuleType] = {
-    "0.3.0": v0_3_0,
+    "0.4.0": v0_4_0,
 }
 
 latest: str = max(revisions, key=_semver_key)

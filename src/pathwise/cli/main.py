@@ -241,6 +241,7 @@ def season_show(
     except KeyError as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(code=1) from exc
+    q = pack.questionnaire
     _print_json(
         {
             "id": pack.id,
@@ -250,8 +251,10 @@ def season_show(
             "revision": pack.revision,
             "available_revisions": list_revisions(pack.id),
             "latest_revision": latest_revision(pack.id),
-            "sections": [s.id for s in pack.sections],
-            "question_count": len(pack.questions),
+            "schema_version": q.schema_version,
+            "data_model_keys": sorted(q.data_model.keys()),
+            "step_count": len(q.steps),
+            "question_count": len(q.questions),
             "scenarios": [s.id for s in pack.scenarios],
             "weights": pack.weights,
         }
@@ -272,13 +275,18 @@ def question_list(
     keys_only: Annotated[bool, typer.Option("--keys-only")] = False,
 ) -> None:
     pack = get_pack(season)
+    qn = pack.questionnaire
     if keys_only:
-        for q in pack.questions:
-            typer.echo(q.key)
+        for step in qn.steps:
+            for qkey in step.questions:
+                typer.echo(qkey)
         return
-    for q in pack.questions:
-        marker = "*" if q.required else " "
-        typer.echo(f"{marker} [{q.section}] {q.key} ({q.type}): {q.prompt}")
+    for step in qn.steps:
+        for qkey in step.questions:
+            q = qn.questions[qkey]
+            field = qn.data_model[qkey]
+            marker = "*" if q.required else " "
+            typer.echo(f"{marker} [{step.id}] {qkey} ({field.type}): {q.prompt}")
 
 
 answer_app = typer.Typer(help="Get/set questionnaire answers.", no_args_is_help=True)

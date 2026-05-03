@@ -12,61 +12,57 @@ from pathwise.core.store import FileStore
 
 UID = "abcdef0123456789abcdef0123456789"
 PACK = get_pack("build-independence")
+QN = PACK.questionnaire
+
+
+def _coerce(key: str, raw):
+    return coerce_answer(key, QN.data_model[key], QN.questions[key], raw)
 
 
 class TestCoerce:
     def test_money(self) -> None:
-        q = PACK.question("current_savings")
-        assert coerce_answer(q, "1500") == 1500
-        assert coerce_answer(q, 1500.5) == 1500.5
+        assert _coerce("current_savings", "1500") == 1500
+        assert _coerce("current_savings", 1500.5) == 1500.5
 
     def test_money_negative_rejected(self) -> None:
-        q = PACK.question("current_savings")
         with pytest.raises(AnswerValidationError):
-            coerce_answer(q, -10)
+            _coerce("current_savings", -10)
 
     def test_yes_no(self) -> None:
-        q = PACK.question("lives_with_parents")
-        assert coerce_answer(q, "yes") is True
-        assert coerce_answer(q, "no") is False
-        assert coerce_answer(q, True) is True
+        assert _coerce("lives_with_parents", "yes") is True
+        assert _coerce("lives_with_parents", "no") is False
+        assert _coerce("lives_with_parents", True) is True
 
     def test_single_choice(self) -> None:
-        q = PACK.question("hours_preference")
-        assert coerce_answer(q, "more") == "more"
+        assert _coerce("hours_preference", "more") == "more"
         with pytest.raises(AnswerValidationError):
-            coerce_answer(q, "elsewhere")
+            _coerce("hours_preference", "elsewhere")
 
     def test_multi_choice(self) -> None:
-        q = PACK.question("car_purpose")
-        assert coerce_answer(q, ["work", "school"]) == ["work", "school"]
-        assert coerce_answer(q, "work") == ["work"]
+        assert _coerce("car_purpose", ["work", "school"]) == ["work", "school"]
+        assert _coerce("car_purpose", "work") == ["work"]
         with pytest.raises(AnswerValidationError):
-            coerce_answer(q, ["bogus"])
+            _coerce("car_purpose", ["bogus"])
 
     def test_scale_bounds(self) -> None:
-        q = PACK.question("move_out_urgency")
-        assert coerce_answer(q, 3) == 3
+        assert _coerce("move_out_urgency", 3) == 3
         with pytest.raises(AnswerValidationError):
-            coerce_answer(q, 0)
+            _coerce("move_out_urgency", 0)
         with pytest.raises(AnswerValidationError):
-            coerce_answer(q, 6)
+            _coerce("move_out_urgency", 6)
 
     def test_required_blank_rejected(self) -> None:
-        q = PACK.question("current_savings")
         with pytest.raises(AnswerValidationError):
-            coerce_answer(q, "")
+            _coerce("current_savings", "")
 
     def test_optional_blank_returns_none(self) -> None:
-        q = PACK.question("car_purpose")
-        assert coerce_answer(q, "") is None
+        assert _coerce("car_purpose", "") is None
 
     def test_home_emotional_cost_choices(self) -> None:
-        q = PACK.question("home_emotional_cost")
         for choice in ("peaceful", "fine", "tense", "hard"):
-            assert coerce_answer(q, choice) == choice
+            assert _coerce("home_emotional_cost", choice) == choice
         with pytest.raises(AnswerValidationError):
-            coerce_answer(q, "miserable")
+            _coerce("home_emotional_cost", "miserable")
 
 
 class TestService:
@@ -83,8 +79,7 @@ class TestService:
         qs = QuestionnaireService(store)
         with pytest.raises(AnswerValidationError):
             qs.set_answers(
-                UID,
-                PACK,
+                UID, PACK,
                 {"current_savings": "1000", "hours_preference": "bogus"},
             )
         # nothing should have been written
@@ -96,6 +91,7 @@ class TestService:
         qs.set_answer(UID, PACK, "current_savings", "1500")
         history = store.read_jsonl(store.answers_history_path(UID, PACK.id))
         assert [h["value"] for h in history] == [1000, 1500]
+        assert all(h["pack_version"] == PACK.version for h in history)
 
     def test_completion_tracking(self, store: FileStore) -> None:
         qs = QuestionnaireService(store)
@@ -108,3 +104,26 @@ class TestService:
         status = qs.completion(UID, PACK)
         assert "current_savings" not in status.missing_required
         assert status.percent > 0
+
+    def test_completion_respects_when(self, store: FileStore) -> None:
+        """move_out_urgency is gated on lives_with_parents=true. It must be
+        hidden (and so absent from missing_required) until the user answers
+        lives_with_parents=true."""
+        qs = QuestionnaireService(store)
+
+        # Empty answers: lives_with_parents is unset, so move_out_urgency is hidden.
+        baseline = qs.completion(UID, PACK)
+        assert "move_out_urgency" not in baseline.missing_required
+
+        qs.set_answer(UID, PACK, "lives_with_parents", "no")
+        after_no = qs.completion(UID, PACK)
+        assert "move_out_urgency" not in after_no.missing_required
+
+        qs.set_answer(UID, PACK, "lives_with_parents", "yes")
+        after_yes = qs.completion(UID, PACK)
+        assert "move_out_urgency" in after_yes.missing_required
+
+    def test_unknown_key_rejected(self, store: FileStore) -> None:
+        qs = QuestionnaireService(store)
+        with pytest.raises(AnswerValidationError):
+            qs.set_answer(UID, PACK, "no_such_field", "1000")
