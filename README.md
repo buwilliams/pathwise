@@ -2,7 +2,7 @@
 
 *Build momentum, live well.*
 
-A life-strategy planner for teens. Pathwise turns a formal life-state model into a mobile-first web app, REST API, and CLI that helps young people think through big transitions — like graduating, getting a car, moving out, or picking what to learn next.
+A life-strategy planner for teens and adults. Pathwise turns a formal life-state model into a mobile-first web app, REST API, and CLI that helps young people think through big transitions — like graduating, getting a car, moving out, or picking what to learn next.
 
 ## Origin
 
