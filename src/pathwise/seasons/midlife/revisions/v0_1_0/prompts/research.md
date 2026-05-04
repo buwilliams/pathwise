@@ -9,21 +9,21 @@ You're researching real-world numbers so the plan we generate for **{{ profile.f
 - Relationship: {{ answers.relationship_status | default("not provided") }}
 - Caregiving: {{ answers.has_dependents | default("not provided") }}
 - Liquid savings: **${{ answers.current_savings | default(0) }}**
-- Retirement: **${{ answers.retirement_savings | default(0) }}**
+- Retirement: **${{ answers.get("retirement_savings") | default(0) }}**
 - Debt (non-mortgage): **${{ answers.current_debt | default(0) }}**
 - Household take-home: **${{ answers.current_monthly_take_home | default(0) }}/mo**
 - Household bills: **${{ answers.current_monthly_bills | default(0) }}/mo**
 - Career feeling: {{ answers.career_feeling | default("not provided") }}
-- Stated interests: {{ answers.interests | default("(none provided)") }}
+- Stated interests: {{ answers.get("interests") | default("(none provided)") }}
 - Wants on the table:
 {%- for cat in ["wants_career","wants_education","wants_relationships","wants_family","wants_place","wants_health","wants_money_goals","wants_creative","wants_lifestyle"] %}
   - **{{ cat }}**: {{ answers.get(cat) | default("[]") }}
 {%- endfor %}
-{%- if answers.business_idea %}
-- Business idea: {{ answers.business_idea }}
+{%- if answers.get("business_idea") %}
+- Business idea: {{ answers.get("business_idea") }}
 {%- endif %}
-{%- if answers.move_destination %}
-- Considering moving to: {{ answers.move_destination }}
+{%- if answers.get("move_destination") %}
+- Considering moving to: {{ answers.get("move_destination") }}
 {%- endif %}
 
 ## Use the web_search tool to find
