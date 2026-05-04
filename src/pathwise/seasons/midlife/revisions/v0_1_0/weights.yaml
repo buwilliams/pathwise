@@ -1,0 +1,54 @@
+# Per the §3.5 weights table in model.md. The leading qe term is a
+# cross-product (q * e); every other entry is a linear weight on a
+# scalar life-state component. K's sub-components and d are tracked
+# but not directly scored — their effect propagates through other
+# variables.
+#
+# Calibration tilt vs. build-independence v0_5_0:
+#   - eta and psi are weighted higher (emotional impact and mental health
+#     are the load-bearing midlife signals)
+#   - nu held high (relational fragility is a real midlife risk)
+#   - i4 (decision independence) raised — agency over schedule is the
+#     scarcest at this season
+#   - i3 lowered slightly — residential independence is rarely the
+#     binding question for midlifers
+#   - gamma raised slightly — projected income trajectory matters more
+#     when the horizon is shorter
+
+weights:
+  qe: 5     # q * e cross-term — "time directed at enjoyment"
+
+  # Values (V)
+  i1: 2     # mobility / location agency
+  i2: 3     # financial independence
+  i3: 1     # residential / domestic alignment
+  i4: 3     # decision independence (schedule, work, direction)
+  e:  3     # enjoyable life experience
+  g:  4     # goal progress (raised — felt progress matters at midlife)
+  beta: 4   # stability / emotional safety
+
+  # Time (T)
+  p: 4      # productive hours per week
+  b: 4      # buffer hours
+  q: 4      # quality of time / energy
+
+  # Assets (A)
+  c: 4      # monthly cash flow
+  sigma: 3  # savings (incl. retirement)
+  r: 4      # risk buffer / emergency fund
+  y: 3      # income
+  gamma: 3  # income growth rate (raised — projected trajectory matters)
+
+  # Health (W)
+  phi: 4    # physical health
+  psi: 5    # mental health (raised — load-bearing at midlife)
+  zeta: 2   # fitness practice
+  eta: 5    # net emotional impact (signed) — load-bearing signal
+  nu: 4     # relational quality
+
+# Recoverability sub-weights for R(s_j) = 1 - (w_l*lambda + w_x*xi + w_d*delta) / sum.
+# Initial defaults — calibration may change these.
+recoverability_weights:
+  lambda: 1   # lock-in duration
+  xi:     1   # exit cost
+  delta:  1   # state disruption

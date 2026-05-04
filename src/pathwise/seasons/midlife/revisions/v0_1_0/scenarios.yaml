@@ -1,0 +1,280 @@
+# Paths of stages, per model.md §2.5. Each path is a sequence; each stage
+# has a duration and structural state flags. The deterministic core
+# composes per-stage life-states from the user's answers + these flags
+# and scores the path via duration-weighted Momentum sum.
+#
+# Recoverability inputs (lambda, xi, state_disruption) on each stage feed
+# R(s_j) per §2.4 — they describe the decision that *enters* this stage,
+# not the steady-state of the stage itself.
+#
+# Buckets at midlife:
+#   - bold_change          : fast, disruptive shift that resets the life now
+#   - compounding_change   : layered, lower-risk shifts that build on existing momentum
+#   - creative_reinvention : skill / credential / creative pivot leverage
+#
+# Horizon for midlife is shorter than the teen pack — 60 months (5 years).
+
+horizon_months: 60
+
+paths:
+  - id: stay_repair_compound
+    label: "Stay the course, repair what's worn, build slowly"
+    bucket: compounding_change
+    description: "Keep the current career and home. Repair the load-bearing pieces (health, partnership, finances) over the first year, then add one focused growth bet (raise, promotion, side income) in years 2–5."
+    stages:
+      - id: repair_year
+        label: "Repair year — health, money, relationships"
+        duration_months: 12
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.05, xi: 0.00, state_disruption: 0.10 }
+      - id: focused_growth
+        label: "Focused growth — raise, expanded scope, or side income"
+        duration_months: 48
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.15, xi: 0.05, state_disruption: 0.20 }
+
+  - id: side_business_replace
+    label: "Build a side business until it can replace the job"
+    bucket: compounding_change
+    description: "Keep income from the day job. Build the business on nights and weekends until it covers your share of household expenses, then transition full-time. Lower-risk variant of starting a business."
+    stages:
+      - id: side_build
+        label: "Side build — keep day job"
+        duration_months: 18
+        car: false
+        moves_out: false
+        training_active: true
+        income_growth: false
+        recoverability: { lambda: 0.20, xi: 0.05, state_disruption: 0.25 }
+      - id: hybrid_transition
+        label: "Hybrid — reduced day job, business growing"
+        duration_months: 12
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.30, xi: 0.15, state_disruption: 0.30 }
+      - id: full_time_owner
+        label: "Full-time on the business"
+        duration_months: 30
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.40, xi: 0.30, state_disruption: 0.40 }
+
+  - id: full_business_launch
+    label: "Quit and launch the business now"
+    bucket: bold_change
+    description: "Use savings as runway, leave the job within months, build the business full-time from the start. Higher cash-flow risk, faster path to autonomy if it works."
+    stages:
+      - id: prep_quit
+        label: "Prep and quit"
+        duration_months: 4
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.15, xi: 0.10, state_disruption: 0.20 }
+      - id: full_time_owner
+        label: "Full-time founder — runway phase"
+        duration_months: 18
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.40, xi: 0.40, state_disruption: 0.50 }
+      - id: post_runway_growth
+        label: "Past runway — paying yourself"
+        duration_months: 38
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.30, xi: 0.30, state_disruption: 0.40 }
+
+  - id: certificate_pivot
+    label: "Short certificate, then pivot fields"
+    bucket: creative_reinvention
+    description: "A 6–12 month certificate or cohort program in a field that fits stated interests, paid for from savings or part-time income, followed by a transition into the new field."
+    stages:
+      - id: train_part_time
+        label: "Training while still working"
+        duration_months: 9
+        car: false
+        moves_out: false
+        training_active: true
+        income_growth: false
+        recoverability: { lambda: 0.15, xi: 0.10, state_disruption: 0.20 }
+      - id: pivot_transition
+        label: "Pivot into the new role"
+        duration_months: 6
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.30, xi: 0.20, state_disruption: 0.40 }
+      - id: established_in_field
+        label: "Established in the new field"
+        duration_months: 45
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.20, xi: 0.10, state_disruption: 0.30 }
+
+  - id: graduate_degree_pivot
+    label: "Return to school for a graduate degree, then pivot"
+    bucket: creative_reinvention
+    description: "Two years of graduate or executive program (full-time or intensive part-time) followed by entry into a higher-leverage field. Larger time and money cost; bigger income lever afterward."
+    stages:
+      - id: in_program
+        label: "In the program"
+        duration_months: 24
+        car: false
+        moves_out: false
+        training_active: true
+        income_growth: false
+        recoverability: { lambda: 0.40, xi: 0.30, state_disruption: 0.40 }
+      - id: post_program_entry
+        label: "First role after the program"
+        duration_months: 18
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.20, xi: 0.10, state_disruption: 0.40 }
+      - id: established_post_grad
+        label: "Established in the new field"
+        duration_months: 18
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.15, xi: 0.05, state_disruption: 0.30 }
+
+  - id: sabbatical_reset
+    label: "Take a sabbatical, then choose"
+    bucket: bold_change
+    description: "Step out for 3–6 months — paid leave, savings, or a planned gap. Use the space to recover, reflect, and pick a direction. Re-enter into a redirected role or path."
+    stages:
+      - id: sabbatical
+        label: "Sabbatical — out of the job"
+        duration_months: 6
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.10, xi: 0.20, state_disruption: 0.40 }
+      - id: re_entry
+        label: "Re-entry — redirected role"
+        duration_months: 12
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.20, xi: 0.10, state_disruption: 0.30 }
+      - id: established_post_reset
+        label: "Established post-reset"
+        duration_months: 42
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.15, xi: 0.05, state_disruption: 0.20 }
+
+  - id: geographic_reset
+    label: "Move to a place that fits the life you want"
+    bucket: bold_change
+    description: "Sell or leave the current home, move to a city or region where cost of living, community, family proximity, or environment supports the life you're trying to build. Often combined with remote work or a job change."
+    stages:
+      - id: prep_move
+        label: "Prep — sell, pack, line up housing"
+        duration_months: 6
+        car: false
+        moves_out: true
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.20, xi: 0.20, state_disruption: 0.40 }
+      - id: settle_in
+        label: "First year in the new place"
+        duration_months: 12
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.30, xi: 0.30, state_disruption: 0.50 }
+      - id: rooted_new_place
+        label: "Rooted in the new place"
+        duration_months: 42
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.20, xi: 0.10, state_disruption: 0.30 }
+
+  - id: simplify_reduce_burn
+    label: "Simplify life, lower the burn, buy back time"
+    bucket: compounding_change
+    description: "Cut household expenses, downsize where possible, reduce the income required to live. Trade some consumption for more buffer, more $b$, and the optionality to make a bigger move later."
+    stages:
+      - id: cut_burn
+        label: "Cut the burn"
+        duration_months: 9
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.05, xi: 0.05, state_disruption: 0.20 }
+      - id: rebuild_buffer
+        label: "Rebuild buffer with the freed cash flow"
+        duration_months: 15
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: false
+        recoverability: { lambda: 0.05, xi: 0.00, state_disruption: 0.10 }
+      - id: optional_next
+        label: "Decide the next move from a stronger base"
+        duration_months: 36
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.15, xi: 0.10, state_disruption: 0.30 }
+
+  - id: creative_practice_revival
+    label: "Make creative practice a real part of life"
+    bucket: creative_reinvention
+    description: "Re-establish a serious creative practice — writing, music, building, teaching, craft — alongside the day job. Aim for cumulative output and possibly income, but treat $\\eta$ and $g$ as the load-bearing benefits."
+    stages:
+      - id: rebuild_practice
+        label: "Rebuild the practice — small, regular blocks"
+        duration_months: 12
+        car: false
+        moves_out: false
+        training_active: true
+        income_growth: false
+        recoverability: { lambda: 0.05, xi: 0.00, state_disruption: 0.10 }
+      - id: ship_something
+        label: "Ship something real"
+        duration_months: 18
+        car: false
+        moves_out: false
+        training_active: true
+        income_growth: false
+        recoverability: { lambda: 0.10, xi: 0.05, state_disruption: 0.15 }
+      - id: integrated_practice
+        label: "Practice integrated into income or identity"
+        duration_months: 30
+        car: false
+        moves_out: false
+        training_active: false
+        income_growth: true
+        recoverability: { lambda: 0.20, xi: 0.10, state_disruption: 0.20 }

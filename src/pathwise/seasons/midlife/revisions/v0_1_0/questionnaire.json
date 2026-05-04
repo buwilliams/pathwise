@@ -1,0 +1,839 @@
+{
+  "schema_version": 1,
+  "data_model": {
+    "wants_career":         { "type": "string_set", "values": ["stay_grow","change_role","pivot_field","start_business","freelance_consult","step_back"] },
+    "wants_education":      { "type": "string_set", "values": ["graduate_degree","executive_program","certificate","online_self_study","apprenticeship_craft","no_formal_training"] },
+    "wants_relationships":  { "type": "string_set", "values": ["deepen_partner","repair_partner","leave_partner","find_partner","find_new_community","deepen_friendships","family_closeness"] },
+    "wants_family":         { "type": "string_set", "values": ["have_first_child","have_more_children","adopt","foster","none_planned"] },
+    "wants_place":          { "type": "string_set", "values": ["move_city","move_country","stay","second_home"] },
+    "wants_health":         { "type": "string_set", "values": ["physical_reset","mental_health_support","recovery_from_burnout","sobriety"] },
+    "wants_money_goals":    { "type": "string_set", "values": ["emergency_fund","pay_down_debt","retirement_boost","save_for_change","reduce_burn"] },
+    "wants_creative":       { "type": "string_set", "values": ["creative_practice","write_or_teach","new_hobby","sabbatical","simplify"] },
+    "wants_lifestyle":      { "type": "string_set", "values": ["pet","faith_or_meaning","service_or_volunteering"] },
+
+    "current_savings":            { "type": "money", "min": 0 },
+    "current_monthly_take_home":  { "type": "money", "min": 0 },
+    "current_monthly_bills":      { "type": "money", "min": 0 },
+    "current_debt":               { "type": "money", "min": 0 },
+    "retirement_savings":         { "type": "money", "min": 0 },
+
+    "relationship_status":        { "type": "string", "values": ["single","dating","partnered","married","separated","divorced","widowed","complicated"] },
+    "has_dependents":             { "type": "string", "values": ["none","young_kids","teens","adult_kids","aging_parents","kids_and_parents"] },
+    "divorce_status":             { "type": "string", "values": ["not_applicable","considering","in_process","recent","years_ago"] },
+    "debt_pressure":              { "type": "string", "values": ["none","manageable","heavy","crisis"] },
+    "career_feeling":             { "type": "string", "values": ["thriving","engaged","drifting","surviving","miserable"] },
+    "career_tenure_years":        { "type": "number", "min": 0, "max": 40, "unit": "years" },
+    "career_change_horizon":      { "type": "string", "values": ["already_starting","6mo","1yr","2yr","5yr","not_planning"] },
+
+    "emergency_fund_floor":       { "type": "money", "min": 0 },
+    "monthly_pressure_comfort":   { "type": "string", "values": ["zero","mild","moderate","high"] },
+    "desired_two_year_income":    { "type": "money", "min": 0 },
+
+    "productive_hours_per_week":  { "type": "hours", "min": 0, "max": 80 },
+    "buffer_hours_per_week":      { "type": "hours", "min": 0, "max": 60 },
+    "quality_of_time_now":        { "type": "scale", "min": 1, "max": 5 },
+
+    "physical_health_self":       { "type": "scale", "min": 1, "max": 5 },
+    "mental_health_self":         { "type": "scale", "min": 1, "max": 5 },
+    "fitness_practice_freq":      { "type": "string", "values": ["none","occasional","weekly","near_daily"] },
+    "sleep_quality":              { "type": "scale", "min": 1, "max": 5 },
+    "emotional_state_now":        { "type": "string", "values": ["very_negative","negative","neutral","positive","very_positive"] },
+    "relational_quality_now":     { "type": "string", "values": ["thin","okay","strong","very_strong"] },
+
+    "creative_practice_freq":     { "type": "string", "values": ["none","sporadic","weekly","near_daily"] },
+    "ready_for_change":           { "type": "scale", "min": 1, "max": 5 },
+    "last_bold_change_years":     { "type": "number", "min": 0, "max": 40, "unit": "years" },
+    "biggest_block":              { "type": "string", "values": ["fear","money","time","family","identity","health","nothing"] },
+
+    "interests":                  { "type": "string" },
+    "education_modality":         { "type": "string", "values": ["graduate","executive","certificate","online","apprenticeship","not_sure"] },
+    "max_training_months":        { "type": "number", "min": 0, "max": 60, "unit": "months" },
+    "training_budget":            { "type": "money", "min": 0 },
+    "completion_confidence":      { "type": "scale", "min": 1, "max": 5 },
+
+    "business_idea":              { "type": "string" },
+    "business_horizon":           { "type": "string", "values": ["already_started","6mo","1yr","2yr","exploring"] },
+    "business_runway_months":     { "type": "number", "min": 0, "max": 60, "unit": "months" },
+
+    "move_destination":           { "type": "string" },
+    "move_horizon":               { "type": "string", "values": ["6mo","1yr","2yr","5yr","exploring"] },
+    "move_motivation":            { "type": "string", "values": ["cost_of_living","family","career","community","environment","lifestyle"] },
+
+    "partner_alignment":          { "type": "scale", "min": 1, "max": 5 },
+    "household_share":            { "type": "string", "values": ["i_carry_most","i_carry_more","balanced","partner_carries_more","partner_carries_most","not_applicable"] },
+
+    "top_value":                  { "type": "string", "values": ["meaning","freedom","enjoyment","security","growth","contribution"] },
+    "stability_now":              { "type": "scale", "min": 1, "max": 5 },
+    "one_year_proud_of":          { "type": "string" },
+    "five_year_proud_of":         { "type": "string" },
+    "top_fear":                   { "type": "string" }
+  },
+
+  "questions": {
+    "wants_career": {
+      "prompt": "Career — what are you considering?",
+      "help": "Pick anything that's on the table, even if you haven't decided. Skip if you're genuinely settled where you are.",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "stay_grow",         "label": "Stay where I am and grow" },
+          { "value": "change_role",       "label": "Change roles within my field" },
+          { "value": "pivot_field",       "label": "Pivot to a different field" },
+          { "value": "start_business",    "label": "Start a business" },
+          { "value": "freelance_consult", "label": "Go independent / consult / freelance" },
+          { "value": "step_back",         "label": "Step back / scale down / semi-retire" }
+        ]
+      }
+    },
+    "wants_education": {
+      "prompt": "Education or training — anything on the table?",
+      "help": "Whatever you're open to, even if you haven't decided.",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "graduate_degree",     "label": "Graduate degree (master's, doctorate)" },
+          { "value": "executive_program",   "label": "Executive education / cohort program" },
+          { "value": "certificate",         "label": "Certificate or credential" },
+          { "value": "online_self_study",   "label": "Online courses / self-study" },
+          { "value": "apprenticeship_craft","label": "Apprenticeship or hands-on craft" },
+          { "value": "no_formal_training",  "label": "No formal training" }
+        ]
+      }
+    },
+    "wants_relationships": {
+      "prompt": "Relationships — what's on your mind?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "deepen_partner",       "label": "Deepen my partnership" },
+          { "value": "repair_partner",       "label": "Repair my partnership" },
+          { "value": "leave_partner",        "label": "End my partnership" },
+          { "value": "find_partner",         "label": "Find a partner" },
+          { "value": "find_new_community",   "label": "Find new community" },
+          { "value": "deepen_friendships",   "label": "Deepen friendships" },
+          { "value": "family_closeness",     "label": "Family closeness" }
+        ]
+      }
+    },
+    "wants_family": {
+      "prompt": "Family — anything you're considering?",
+      "help": "Whatever's actually on the table for you and your household.",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "have_first_child",  "label": "Have a first child" },
+          { "value": "have_more_children","label": "Have another child" },
+          { "value": "adopt",             "label": "Adopt" },
+          { "value": "foster",            "label": "Foster" },
+          { "value": "none_planned",      "label": "No additions planned" }
+        ]
+      }
+    },
+    "wants_place": {
+      "prompt": "Place — where do you want to be?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "move_city",   "label": "Move to a new city" },
+          { "value": "move_country","label": "Move to a new country" },
+          { "value": "stay",        "label": "Stay where I am" },
+          { "value": "second_home", "label": "Second home / part-year elsewhere" }
+        ]
+      }
+    },
+    "wants_health": {
+      "prompt": "Health — anything you'd like to invest in?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "physical_reset",       "label": "Physical reset (movement, food, sleep)" },
+          { "value": "mental_health_support","label": "Mental health support" },
+          { "value": "recovery_from_burnout","label": "Recovery from burnout" },
+          { "value": "sobriety",             "label": "Sobriety / cut back on something" }
+        ]
+      }
+    },
+    "wants_money_goals": {
+      "prompt": "Money — what are you working toward?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "emergency_fund",   "label": "Build an emergency fund" },
+          { "value": "pay_down_debt",    "label": "Pay down debt" },
+          { "value": "retirement_boost", "label": "Boost retirement savings" },
+          { "value": "save_for_change",  "label": "Save for a change (sabbatical, business, move)" },
+          { "value": "reduce_burn",      "label": "Lower my monthly burn" }
+        ]
+      }
+    },
+    "wants_creative": {
+      "prompt": "Creative & rest — anything you've been wanting?",
+      "help": "The things that get crowded out first when everything else is full.",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "creative_practice", "label": "A real creative practice" },
+          { "value": "write_or_teach",    "label": "Write, speak, or teach" },
+          { "value": "new_hobby",         "label": "Pick up a new hobby" },
+          { "value": "sabbatical",        "label": "Take a sabbatical" },
+          { "value": "simplify",          "label": "Simplify / declutter / less of everything" }
+        ]
+      }
+    },
+    "wants_lifestyle": {
+      "prompt": "Lifestyle — anything else?",
+      "required": false,
+      "input": {
+        "kind": "multi_choice",
+        "options": [
+          { "value": "pet",                  "label": "Get a pet" },
+          { "value": "faith_or_meaning",     "label": "Build a faith or meaning practice" },
+          { "value": "service_or_volunteering","label": "Service or volunteering" }
+        ]
+      }
+    },
+
+    "current_savings": {
+      "prompt": "Roughly how much do you have in liquid savings?",
+      "help": "Checking, savings, taxable investments. Skip retirement accounts — that's the next question.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "retirement_savings": {
+      "prompt": "About how much in retirement accounts?",
+      "help": "401(k), IRA, pension value. A rough number is fine.",
+      "required": false,
+      "input": { "kind": "money", "min": 0 }
+    },
+    "current_monthly_take_home": {
+      "prompt": "About how much do you (and your partner, if applicable) take home each month?",
+      "help": "After taxes. Combined household. Use a typical month if it varies.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "current_monthly_bills": {
+      "prompt": "About how much do you spend each month on the non-negotiable stuff?",
+      "help": "Rent or mortgage, utilities, food, insurance, childcare, debt payments. The bills that come whether or not you have energy that month.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "current_debt": {
+      "prompt": "How much non-mortgage debt do you carry?",
+      "help": "Credit cards, student loans, car loans, business debt. Put 0 if none.",
+      "input": { "kind": "money", "min": 0 }
+    },
+
+    "relationship_status": {
+      "prompt": "Where are you in your relationship life?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "single",       "label": "Single" },
+          { "value": "dating",       "label": "Dating someone" },
+          { "value": "partnered",    "label": "Partnered, not married" },
+          { "value": "married",      "label": "Married" },
+          { "value": "separated",    "label": "Separated" },
+          { "value": "divorced",     "label": "Divorced" },
+          { "value": "widowed",      "label": "Widowed" },
+          { "value": "complicated",  "label": "Complicated" }
+        ]
+      }
+    },
+    "has_dependents": {
+      "prompt": "Who are you responsible for right now?",
+      "help": "Beyond yourself.",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "none",            "label": "Just me" },
+          { "value": "young_kids",      "label": "Young kids" },
+          { "value": "teens",           "label": "Teenagers" },
+          { "value": "adult_kids",      "label": "Adult kids who still need support" },
+          { "value": "aging_parents",   "label": "Aging parents" },
+          { "value": "kids_and_parents","label": "Kids and aging parents" }
+        ]
+      }
+    },
+    "divorce_status": {
+      "prompt": "Has divorce been part of your story?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "not_applicable", "label": "No" },
+          { "value": "considering",    "label": "I'm considering it" },
+          { "value": "in_process",     "label": "I'm in the middle of one" },
+          { "value": "recent",         "label": "Recent — past two years" },
+          { "value": "years_ago",      "label": "Years ago" }
+        ]
+      }
+    },
+    "debt_pressure": {
+      "prompt": "How does your debt feel?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "none",       "label": "I don't have any" },
+          { "value": "manageable", "label": "Manageable — I have a plan" },
+          { "value": "heavy",      "label": "Heavy — it's pressing on me" },
+          { "value": "crisis",     "label": "I'm in real trouble with it" }
+        ]
+      }
+    },
+    "career_feeling": {
+      "prompt": "How do you feel about your work right now?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "thriving",  "label": "Thriving — this is the best work of my life" },
+          { "value": "engaged",   "label": "Engaged — mostly good, with some gaps" },
+          { "value": "drifting",  "label": "Drifting — going through motions" },
+          { "value": "surviving", "label": "Surviving — I show up because I have to" },
+          { "value": "miserable", "label": "Miserable — I want out" }
+        ]
+      }
+    },
+    "career_tenure_years": {
+      "prompt": "How long have you been in your current role or field?",
+      "help": "Roughly. The point is order of magnitude.",
+      "required": false,
+      "input": { "kind": "number", "min": 0, "max": 40, "unit": "years" }
+    },
+    "career_change_horizon": {
+      "prompt": "If you were to change something about your work, when?",
+      "when": {
+        "$any": [
+          { "wants_career": { "$contains": "change_role" } },
+          { "wants_career": { "$contains": "pivot_field" } },
+          { "wants_career": { "$contains": "start_business" } },
+          { "wants_career": { "$contains": "freelance_consult" } },
+          { "wants_career": { "$contains": "step_back" } }
+        ]
+      },
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "already_starting", "label": "I've already started" },
+          { "value": "6mo",              "label": "Within 6 months" },
+          { "value": "1yr",              "label": "Within a year" },
+          { "value": "2yr",              "label": "Within 2 years" },
+          { "value": "5yr",              "label": "Within 5 years" },
+          { "value": "not_planning",     "label": "Not actively planning" }
+        ]
+      }
+    },
+
+    "emergency_fund_floor": {
+      "prompt": "What's the lowest you'd let your liquid savings drop before it would feel scary?",
+      "help": "Your emotional 'don't go below this' line.",
+      "input": { "kind": "money", "min": 0 }
+    },
+    "monthly_pressure_comfort": {
+      "prompt": "How much month-to-month money pressure feels okay?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "zero",     "label": "I want zero stress about money" },
+          { "value": "mild",     "label": "A little tightness is fine" },
+          { "value": "moderate", "label": "I can handle real pressure if it's worth it" },
+          { "value": "high",     "label": "I'll tolerate high pressure for a real change" }
+        ]
+      }
+    },
+    "desired_two_year_income": {
+      "prompt": "Two years from now, what monthly take-home would feel like 'this is working'?",
+      "help": "Combined household, your number. There's no right answer.",
+      "required": false,
+      "input": { "kind": "money", "min": 0 }
+    },
+
+    "productive_hours_per_week": {
+      "prompt": "Outside of obligations, how many hours a week feel actually productive for you?",
+      "help": "Not zoned-out tired hours — hours where you can actually do things that compound. After work, kids, household, sleep.",
+      "input": { "kind": "hours", "min": 0, "max": 80 }
+    },
+    "buffer_hours_per_week": {
+      "prompt": "How many hours a week are unscheduled — yours to direct however?",
+      "help": "Free space, not time you've already promised to anything or anyone.",
+      "input": { "kind": "hours", "min": 0, "max": 60 }
+    },
+    "quality_of_time_now": {
+      "prompt": "Right now, how good is the quality of your discretionary time and energy?",
+      "help": "1 = drained and scattered. 5 = rested and focused.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+
+    "physical_health_self": {
+      "prompt": "How would you rate your physical health?",
+      "help": "1 = struggling. 5 = strong.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "mental_health_self": {
+      "prompt": "How would you rate your mental health?",
+      "help": "1 = struggling. 5 = solid.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "fitness_practice_freq": {
+      "prompt": "How often do you actually move your body and pay attention to what you eat?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "none",       "label": "Not really" },
+          { "value": "occasional", "label": "Occasionally" },
+          { "value": "weekly",     "label": "A few times a week" },
+          { "value": "near_daily", "label": "Almost every day" }
+        ]
+      }
+    },
+    "sleep_quality": {
+      "prompt": "How is your sleep, on net, lately?",
+      "help": "1 = wrecked. 5 = consistently good.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "emotional_state_now": {
+      "prompt": "How are you feeling about your life lately, on net?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "very_negative", "label": "Pretty rough" },
+          { "value": "negative",      "label": "More bad than good" },
+          { "value": "neutral",       "label": "Neutral / mixed" },
+          { "value": "positive",      "label": "More good than bad" },
+          { "value": "very_positive", "label": "Genuinely good" }
+        ]
+      }
+    },
+    "relational_quality_now": {
+      "prompt": "How strong is your network of people right now?",
+      "help": "Partner, close friends, family, mentors, community. The people you can call.",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "thin",        "label": "Thin — not a lot to lean on" },
+          { "value": "okay",        "label": "Okay — a few people" },
+          { "value": "strong",      "label": "Strong — solid circle" },
+          { "value": "very_strong", "label": "Very strong — surrounded by good people" }
+        ]
+      }
+    },
+
+    "creative_practice_freq": {
+      "prompt": "How often do you do something creative for its own sake?",
+      "help": "Music, writing, building, drawing, cooking experiments — anything you make.",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "none",       "label": "Not at all" },
+          { "value": "sporadic",   "label": "Sporadically" },
+          { "value": "weekly",     "label": "Weekly-ish" },
+          { "value": "near_daily", "label": "Almost every day" }
+        ]
+      }
+    },
+    "ready_for_change": {
+      "prompt": "How ready do you feel to actually make a real change?",
+      "help": "1 = not ready, just thinking. 5 = ready, the brake is off.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "last_bold_change_years": {
+      "prompt": "How long since you last made a bold life change?",
+      "help": "A move, a career change, leaving or starting something significant. Roughly.",
+      "required": false,
+      "input": { "kind": "number", "min": 0, "max": 40, "unit": "years" }
+    },
+    "biggest_block": {
+      "prompt": "What's the biggest thing in the way of making a change?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "fear",     "label": "Fear — of failure, of regret, of the unknown" },
+          { "value": "money",    "label": "Money — I can't afford the gap" },
+          { "value": "time",     "label": "Time — there's no slack" },
+          { "value": "family",   "label": "Family — partner, kids, parents tied to current setup" },
+          { "value": "identity", "label": "Identity — I don't know who I'd be on the other side" },
+          { "value": "health",   "label": "Health — I don't have the energy" },
+          { "value": "nothing",  "label": "Nothing real — I just haven't moved" }
+        ]
+      }
+    },
+
+    "interests": {
+      "prompt": "What kinds of work, activities, or fields actually interest you right now?",
+      "help": "A few words is plenty. The point is what pulls you, not what makes sense on a resume.",
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. design, writing, coaching, real estate, building things, helping kids, running a small shop" }
+    },
+    "education_modality": {
+      "prompt": "If you trained again, what kind sounds most like you?",
+      "when": {
+        "$any": [
+          { "wants_education": { "$contains": "graduate_degree" } },
+          { "wants_education": { "$contains": "executive_program" } },
+          { "wants_education": { "$contains": "certificate" } },
+          { "wants_education": { "$contains": "online_self_study" } },
+          { "wants_education": { "$contains": "apprenticeship_craft" } }
+        ]
+      },
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "graduate",       "label": "Graduate degree" },
+          { "value": "executive",      "label": "Executive / cohort program" },
+          { "value": "certificate",    "label": "Short certificate or credential" },
+          { "value": "online",         "label": "Online courses, on my own time" },
+          { "value": "apprenticeship", "label": "Hands-on apprenticeship" },
+          { "value": "not_sure",       "label": "Not sure yet" }
+        ]
+      }
+    },
+    "max_training_months": {
+      "prompt": "How many months of training would you be willing to do?",
+      "when": {
+        "$any": [
+          { "wants_education": { "$contains": "graduate_degree" } },
+          { "wants_education": { "$contains": "executive_program" } },
+          { "wants_education": { "$contains": "certificate" } },
+          { "wants_education": { "$contains": "online_self_study" } },
+          { "wants_education": { "$contains": "apprenticeship_craft" } }
+        ]
+      },
+      "required": false,
+      "input": { "kind": "number", "min": 0, "max": 60, "unit": "months" }
+    },
+    "training_budget": {
+      "prompt": "How much could you put toward training, total?",
+      "help": "Tuition, fees, materials. Loans count as money out, not in.",
+      "when": {
+        "$any": [
+          { "wants_education": { "$contains": "graduate_degree" } },
+          { "wants_education": { "$contains": "executive_program" } },
+          { "wants_education": { "$contains": "certificate" } },
+          { "wants_education": { "$contains": "online_self_study" } }
+        ]
+      },
+      "required": false,
+      "input": { "kind": "money", "min": 0 }
+    },
+    "completion_confidence": {
+      "prompt": "If you started a training path, how confident are you you'd finish?",
+      "help": "1 = realistic chance I'd drop out. 5 = I'd see it through.",
+      "when": {
+        "$any": [
+          { "wants_education": { "$contains": "graduate_degree" } },
+          { "wants_education": { "$contains": "executive_program" } },
+          { "wants_education": { "$contains": "certificate" } },
+          { "wants_education": { "$contains": "online_self_study" } },
+          { "wants_education": { "$contains": "apprenticeship_craft" } }
+        ]
+      },
+      "required": false,
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+
+    "business_idea": {
+      "prompt": "Tell me about the business idea — even rough.",
+      "help": "What it is, who it's for. A sentence or two is plenty.",
+      "when": { "wants_career": { "$contains": "start_business" } },
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. coaching for new managers; a small e-commerce brand; a consulting practice for nonprofits" }
+    },
+    "business_horizon": {
+      "prompt": "When would you start the business?",
+      "when": { "wants_career": { "$contains": "start_business" } },
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "already_started", "label": "I've already started" },
+          { "value": "6mo",             "label": "Within 6 months" },
+          { "value": "1yr",             "label": "Within a year" },
+          { "value": "2yr",             "label": "Within 2 years" },
+          { "value": "exploring",       "label": "Just exploring" }
+        ]
+      }
+    },
+    "business_runway_months": {
+      "prompt": "If you went full-time on it, how many months of runway could you cover?",
+      "help": "How long could the household survive on savings + partner income if your income went to zero.",
+      "when": { "wants_career": { "$contains": "start_business" } },
+      "required": false,
+      "input": { "kind": "number", "min": 0, "max": 60, "unit": "months" }
+    },
+
+    "move_destination": {
+      "prompt": "Where are you thinking about going?",
+      "help": "City, region, or country. \"Not sure\" is a valid answer too.",
+      "when": {
+        "$any": [
+          { "wants_place": { "$contains": "move_city" } },
+          { "wants_place": { "$contains": "move_country" } }
+        ]
+      },
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. Asheville, Lisbon, somewhere in the mountains" }
+    },
+    "move_horizon": {
+      "prompt": "When?",
+      "when": {
+        "$any": [
+          { "wants_place": { "$contains": "move_city" } },
+          { "wants_place": { "$contains": "move_country" } }
+        ]
+      },
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "6mo",       "label": "Within 6 months" },
+          { "value": "1yr",       "label": "Within a year" },
+          { "value": "2yr",       "label": "Within 2 years" },
+          { "value": "5yr",       "label": "Within 5 years" },
+          { "value": "exploring", "label": "Just exploring" }
+        ]
+      }
+    },
+    "move_motivation": {
+      "prompt": "What's pulling you toward a move?",
+      "when": {
+        "$any": [
+          { "wants_place": { "$contains": "move_city" } },
+          { "wants_place": { "$contains": "move_country" } }
+        ]
+      },
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "cost_of_living", "label": "Lower cost of living" },
+          { "value": "family",         "label": "Closer to family" },
+          { "value": "career",         "label": "Career or business reasons" },
+          { "value": "community",      "label": "Better community fit" },
+          { "value": "environment",    "label": "Climate or environment" },
+          { "value": "lifestyle",      "label": "Lifestyle change / reset" }
+        ]
+      }
+    },
+
+    "partner_alignment": {
+      "prompt": "How aligned do you and your partner feel about the big decisions ahead?",
+      "help": "1 = we're on different planets. 5 = we're rowing together.",
+      "when": {
+        "$any": [
+          { "relationship_status": "partnered" },
+          { "relationship_status": "married" },
+          { "relationship_status": "separated" },
+          { "relationship_status": "complicated" }
+        ]
+      },
+      "required": false,
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "household_share": {
+      "prompt": "How is the household load shared?",
+      "help": "Childcare, cooking, logistics, the invisible labor.",
+      "when": {
+        "$any": [
+          { "relationship_status": "partnered" },
+          { "relationship_status": "married" }
+        ]
+      },
+      "required": false,
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "i_carry_most",       "label": "I carry most of it" },
+          { "value": "i_carry_more",       "label": "I carry a bit more" },
+          { "value": "balanced",           "label": "Roughly balanced" },
+          { "value": "partner_carries_more","label": "Partner carries a bit more" },
+          { "value": "partner_carries_most","label": "Partner carries most of it" },
+          { "value": "not_applicable",     "label": "Not applicable" }
+        ]
+      }
+    },
+
+    "top_value": {
+      "prompt": "Of these, which feels most important to you right now?",
+      "input": {
+        "kind": "single_choice",
+        "options": [
+          { "value": "meaning",     "label": "Meaning — work that matters to me" },
+          { "value": "freedom",     "label": "Freedom — control over my time and choices" },
+          { "value": "enjoyment",   "label": "Enjoyment — life that feels good to live" },
+          { "value": "security",    "label": "Security — solid ground under me and mine" },
+          { "value": "growth",      "label": "Growth — becoming more capable" },
+          { "value": "contribution","label": "Contribution — being useful to others" }
+        ]
+      }
+    },
+    "stability_now": {
+      "prompt": "How stable does your life feel right now?",
+      "help": "1 = chaotic. 5 = solid ground.",
+      "input": { "kind": "scale", "min": 1, "max": 5 }
+    },
+    "one_year_proud_of": {
+      "prompt": "A year from now, what would you love to be able to say you did?",
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. left the job, finished the program, paid off the card, got fit again, started the thing" }
+    },
+    "five_year_proud_of": {
+      "prompt": "Five years from now, what would you love to be living?",
+      "help": "Sketch it. The shape, not the specifics.",
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. running my own practice; closer to family; healthier than I am now; debt-free; making things again" }
+    },
+    "top_fear": {
+      "prompt": "What's the thing you most want to avoid happening?",
+      "required": false,
+      "input": { "kind": "text", "placeholder": "e.g. waking up at 50 still here; my health failing; financial collapse; losing my marriage; never trying" }
+    }
+  },
+
+  "steps": [
+    {
+      "id": "wants_work_life",
+      "title": "What's on the table — work and education",
+      "blurb": "Pick anything you're considering, even loosely. We'll only ask follow-up questions on the things you're actually thinking about.",
+      "questions": ["wants_career", "wants_education", "wants_money_goals"]
+    },
+    {
+      "id": "wants_relationships_family",
+      "title": "Relationships, family, and place",
+      "blurb": "The people and place you live among.",
+      "questions": ["wants_relationships", "wants_family", "wants_place"]
+    },
+    {
+      "id": "wants_self",
+      "title": "Health, creativity, and rest",
+      "blurb": "The dimensions that get crowded out first when everything else is full.",
+      "questions": ["wants_health", "wants_creative", "wants_lifestyle"]
+    },
+    {
+      "id": "now_money",
+      "title": "Where you are now — money",
+      "blurb": "Quick honest snapshot. We're getting real numbers so the plan can be real.",
+      "questions": [
+        "current_savings",
+        "retirement_savings",
+        "current_monthly_take_home",
+        "current_monthly_bills",
+        "current_debt",
+        "debt_pressure"
+      ]
+    },
+    {
+      "id": "now_life",
+      "title": "Where you are now — life shape",
+      "questions": [
+        "relationship_status",
+        "has_dependents",
+        "divorce_status",
+        "career_feeling",
+        "career_tenure_years"
+      ]
+    },
+    {
+      "id": "money_comfort",
+      "title": "Money comfort",
+      "blurb": "How much pressure feels okay, and where your floor is.",
+      "questions": ["emergency_fund_floor", "monthly_pressure_comfort", "desired_two_year_income"]
+    },
+    {
+      "id": "time",
+      "title": "Time and energy",
+      "questions": ["productive_hours_per_week", "buffer_hours_per_week", "quality_of_time_now"]
+    },
+    {
+      "id": "health",
+      "title": "Body, mind, and the people around you",
+      "blurb": "None of this is on a balance sheet, and all of it shapes what's actually possible.",
+      "questions": [
+        "physical_health_self",
+        "mental_health_self",
+        "fitness_practice_freq",
+        "sleep_quality",
+        "emotional_state_now",
+        "relational_quality_now"
+      ]
+    },
+    {
+      "id": "creative_change",
+      "title": "Creativity and readiness",
+      "blurb": "What you make, and how ready you actually are to move.",
+      "questions": [
+        "creative_practice_freq",
+        "ready_for_change",
+        "last_bold_change_years",
+        "biggest_block"
+      ]
+    },
+    {
+      "id": "career_detail",
+      "title": "About changing your work",
+      "when": {
+        "$any": [
+          { "wants_career": { "$contains": "change_role" } },
+          { "wants_career": { "$contains": "pivot_field" } },
+          { "wants_career": { "$contains": "start_business" } },
+          { "wants_career": { "$contains": "freelance_consult" } },
+          { "wants_career": { "$contains": "step_back" } }
+        ]
+      },
+      "questions": ["career_change_horizon", "interests"]
+    },
+    {
+      "id": "education_detail",
+      "title": "About training or going back to school",
+      "when": {
+        "$any": [
+          { "wants_education": { "$contains": "graduate_degree" } },
+          { "wants_education": { "$contains": "executive_program" } },
+          { "wants_education": { "$contains": "certificate" } },
+          { "wants_education": { "$contains": "online_self_study" } },
+          { "wants_education": { "$contains": "apprenticeship_craft" } }
+        ]
+      },
+      "questions": ["education_modality", "max_training_months", "training_budget", "completion_confidence"]
+    },
+    {
+      "id": "business_detail",
+      "title": "About the business",
+      "when": { "wants_career": { "$contains": "start_business" } },
+      "questions": ["business_idea", "business_horizon", "business_runway_months"]
+    },
+    {
+      "id": "place_detail",
+      "title": "About moving",
+      "when": {
+        "$any": [
+          { "wants_place": { "$contains": "move_city" } },
+          { "wants_place": { "$contains": "move_country" } }
+        ]
+      },
+      "questions": ["move_destination", "move_horizon", "move_motivation"]
+    },
+    {
+      "id": "partnership",
+      "title": "About your partnership",
+      "when": {
+        "$any": [
+          { "relationship_status": "partnered" },
+          { "relationship_status": "married" },
+          { "relationship_status": "separated" },
+          { "relationship_status": "complicated" }
+        ]
+      },
+      "questions": ["partner_alignment", "household_share"]
+    },
+    {
+      "id": "future",
+      "title": "Future you",
+      "questions": ["top_value", "stability_now", "one_year_proud_of", "five_year_proud_of", "top_fear"]
+    }
+  ]
+}

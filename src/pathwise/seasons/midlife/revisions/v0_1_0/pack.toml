@@ -1,0 +1,7 @@
+[pack]
+id = "midlife"
+name = "Midlife"
+summary = "For adults in their late 30s to mid 40s feeling stuck, restless, or ready for real change. Career pivots, business ideas, returning to school, moving, repairing or leaving a partnership, growing the family — and the courage to actually make a move."
+version = "0.1.0"
+age_min = 35
+age_max = 45
