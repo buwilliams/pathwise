@@ -345,11 +345,15 @@
   color: var(--ink-mute);
   margin-bottom: var(--space-5);
 }
-.dotted-path {
-  letter-spacing: 0.3em;
-  color: var(--terracotta);
-  font-size: 1.2rem;
-  margin: var(--space-3) 0 var(--space-4);
+.brand-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.brand-title-mark {
+  height: 0.55em;
+  width: auto;
+  flex-shrink: 0;
 }
 .spinner {
   display: inline-block;

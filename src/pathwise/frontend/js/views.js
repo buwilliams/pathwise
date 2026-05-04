@@ -36,8 +36,10 @@ const views = (() => {
     submit.disabled = true;
 
     return card(
-      el("h1", {}, "pathwise"),
-      el("div", { class: "dotted-path" }, "···●···●···●···▶"),
+      el("h1", { class: "brand-title" },
+        el("span", {}, "pathwise"),
+        el("img", { src: "/assets/logo.svg", alt: "", class: "brand-title-mark" }),
+      ),
       el("p", { class: "tagline" }, "build momentum, live well."),
       el("p", { class: "lede" }, "A small space to think clearly about your money, your time, and what's next."),
       el("div", { class: "field" },
@@ -329,7 +331,17 @@ const views = (() => {
         .map(q => q.key);
     }
 
-    let currentIdx = 0;
+    // Resume at the first step with unanswered required questions. If
+    // every step is complete (revising / post-error / re-entering), land on
+    // the last step so they can immediately regenerate.
+    function firstIncompleteStepIdx() {
+      const steps = visibleSteps();
+      for (let i = 0; i < steps.length; i++) {
+        if (unansweredRequiredOnStep(steps[i]).length > 0) return i;
+      }
+      return Math.max(steps.length - 1, 0);
+    }
+    let currentIdx = firstIncompleteStepIdx();
     // Track the last index we actually rendered so re-renders triggered by
     // answer changes (for conditional `when` re-evaluation) don't yank the
     // page to the top. Only step navigation should scroll.
@@ -381,22 +393,33 @@ const views = (() => {
       }, "Back");
       backBtn.disabled = currentIdx === 0;
 
-      const primaryBtn = isLast
-        ? el("button", { class: "btn btn-accent", onclick: onGenerate }, "Generate my plan")
-        : el("button", {
+      const nextBtn = !isLast
+        ? el("button", {
             class: "btn",
             onclick: () => { currentIdx += 1; renderStep(); },
-          }, "Next");
+          }, "Next")
+        : null;
+
+      // Generate is always present on the last step (the natural exit) and
+      // also on earlier steps once every required answer is in — so a user
+      // who returned mid-questionnaire after an error or to review prior
+      // answers can regenerate without walking to the end.
+      const generateBtn = el("button",
+        { class: "btn btn-accent", onclick: onGenerate },
+        "Generate my plan",
+      );
 
       const hint = el("p", { class: "step-hint" }, "");
 
-      // Updates primaryBtn.disabled and the hint message based on the
-      // current required-question state — without rebuilding the field
-      // DOM. Called both on initial render and after each answer when
+      // Updates button state and the hint message based on the current
+      // required-question state — without rebuilding the field DOM.
+      // Called both on initial render and after each answer when
       // visibility didn't change, so a focused text input keeps focus.
       function updateGate() {
         const stepMissing = unansweredRequiredOnStep(step);
-        primaryBtn.disabled = stepMissing.length > 0 || (isLast && !isComplete);
+        if (nextBtn) nextBtn.disabled = stepMissing.length > 0;
+        generateBtn.hidden = !isLast && !isComplete;
+        generateBtn.disabled = !isComplete;
         if (stepMissing.length > 0) {
           hint.textContent =
             `Answer the required ${stepMissing.length === 1 ? "question" : `${stepMissing.length} questions`} on this step to continue.`;
@@ -437,7 +460,7 @@ const views = (() => {
       const nav = el("div", {
         class: "btn-row",
         style: "flex-direction: row; gap: var(--space-3); margin-top: var(--space-4);",
-      }, backBtn, primaryBtn);
+      }, ...[backBtn, nextBtn, generateBtn].filter(Boolean));
 
       updateGate();
       body.replaceChildren(sectionEl, hint, nav);

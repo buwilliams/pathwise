@@ -1,11 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 16">
   <title>Pathwise</title>
-  <g fill="none" stroke="#E8985C" stroke-width="3" stroke-linecap="round">
-    <circle cx="14" cy="46" r="3.5" fill="#E8985C" stroke="none"/>
-    <line x1="20" y1="44" x2="26" y2="40" stroke-dasharray="2 4"/>
-    <circle cx="30" cy="36" r="3" fill="#E8985C" stroke="none"/>
-    <line x1="34" y1="33" x2="40" y2="27" stroke-dasharray="2 4"/>
-    <circle cx="44" cy="22" r="2.5" fill="#E8985C" stroke="none"/>
-    <path d="M48 19 L54 13 L52 18 L57 18" stroke="#0F1B2D" fill="none"/>
+  <g fill="#E8985C">
+    <circle cx="6" cy="8" r="2"/>
+    <circle cx="14" cy="8" r="1.2"/>
+    <circle cx="18" cy="8" r="1.2"/>
+    <circle cx="22" cy="8" r="1.2"/>
+    <circle cx="30" cy="8" r="2"/>
+    <circle cx="38" cy="8" r="1.2"/>
+    <circle cx="42" cy="8" r="1.2"/>
+    <circle cx="46" cy="8" r="1.2"/>
+    <path d="M53 3.5 L63.5 8 L53 12.5 Z"/>
   </g>
 </svg>
