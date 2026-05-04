@@ -357,6 +357,17 @@ const views = (() => {
     const body = el("div", {});
     root.appendChild(body);
 
+    // Cheap structural fingerprint of "which steps and questions are
+    // currently visible on this step." Used by the answer callback to
+    // skip a full re-render when an answer change didn't flip any
+    // `when` predicate — re-rendering destroys and recreates the
+    // focused input, which on iOS dismisses the keyboard mid-typing.
+    function structuralSig(step) {
+      const stepIds = visibleSteps().map(s => s.title);
+      const qKeys = visibleQuestions(step).map(q => q.key);
+      return stepIds.join("|") + "::" + qKeys.join("|");
+    }
+
     function renderStep() {
       const steps = visibleSteps();
       if (currentIdx >= steps.length) currentIdx = Math.max(steps.length - 1, 0);
@@ -364,16 +375,55 @@ const views = (() => {
       const isLast = currentIdx === steps.length - 1;
       updateStepLabel();
 
+      const backBtn = el("button", {
+        class: "btn btn-secondary",
+        onclick: () => { if (currentIdx > 0) { currentIdx -= 1; renderStep(); } },
+      }, "Back");
+      backBtn.disabled = currentIdx === 0;
+
+      const primaryBtn = isLast
+        ? el("button", { class: "btn btn-accent", onclick: onGenerate }, "Generate my plan")
+        : el("button", {
+            class: "btn",
+            onclick: () => { currentIdx += 1; renderStep(); },
+          }, "Next");
+
+      const hint = el("p", { class: "step-hint" }, "");
+
+      // Updates primaryBtn.disabled and the hint message based on the
+      // current required-question state — without rebuilding the field
+      // DOM. Called both on initial render and after each answer when
+      // visibility didn't change, so a focused text input keeps focus.
+      function updateGate() {
+        const stepMissing = unansweredRequiredOnStep(step);
+        primaryBtn.disabled = stepMissing.length > 0 || (isLast && !isComplete);
+        if (stepMissing.length > 0) {
+          hint.textContent =
+            `Answer the required ${stepMissing.length === 1 ? "question" : `${stepMissing.length} questions`} on this step to continue.`;
+          hint.hidden = false;
+        } else {
+          hint.textContent = "";
+          hint.hidden = true;
+        }
+      }
+
       const fields = visibleQuestions(step).map(q =>
         questionField(q, schema.data_model[q.key], answers[q.key], async (val) => {
           try {
+            const sigBefore = structuralSig(step);
             const res = await onAnswer(q.key, val);
             answers[q.key] = res.answers[q.key];
             isComplete = !!res.completion.is_complete;
             setProgress(res.completion.percent);
-            // An answer change can show or hide other questions in this
-            // step (or other steps). Cheapest correct behavior: re-render.
-            renderStep();
+            if (structuralSig(step) !== sigBefore) {
+              // A `when` predicate flipped — questions appeared or
+              // disappeared. Have to re-render to reflect that.
+              renderStep();
+            } else {
+              // No structural change. Update the Next button + hint in
+              // place so the focused input survives (iOS keyboard).
+              updateGate();
+            }
           } catch (e) { toast(e.message, "error"); }
         })
       );
@@ -384,38 +434,13 @@ const views = (() => {
         ...fields,
       );
 
-      const backBtn = el("button", {
-        class: "btn btn-secondary",
-        onclick: () => { if (currentIdx > 0) { currentIdx -= 1; renderStep(); } },
-      }, "Back");
-      backBtn.disabled = currentIdx === 0;
-
-      const stepMissing = unansweredRequiredOnStep(step);
-      const primaryBtn = isLast
-        ? el("button", { class: "btn btn-accent", onclick: onGenerate }, "Generate my plan")
-        : el("button", {
-            class: "btn",
-            onclick: () => { currentIdx += 1; renderStep(); },
-          }, "Next");
-      // Block forward navigation when this step's required questions are
-      // not yet answered. The final-step button additionally requires the
-      // whole questionnaire to be complete.
-      primaryBtn.disabled = stepMissing.length > 0 || (isLast && !isComplete);
-
       const nav = el("div", {
         class: "btn-row",
         style: "flex-direction: row; gap: var(--space-3); margin-top: var(--space-4);",
       }, backBtn, primaryBtn);
 
-      // When the primary button is disabled because of unanswered
-      // required questions on this step, tell the user why.
-      const hint = stepMissing.length > 0
-        ? el("p", { class: "step-hint" },
-            `Answer the required ${stepMissing.length === 1 ? "question" : `${stepMissing.length} questions`} on this step to continue.`,
-          )
-        : null;
-
-      body.replaceChildren(sectionEl, ...(hint ? [hint] : []), nav);
+      updateGate();
+      body.replaceChildren(sectionEl, hint, nav);
       // Only scroll on actual step navigation (Next / Back / first render),
       // not on the within-step re-render triggered by an answer change.
       if (currentIdx !== lastRenderedIdx) {
