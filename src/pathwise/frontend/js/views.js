@@ -41,7 +41,8 @@ const views = (() => {
         el("img", { src: "/assets/logo.svg", alt: "", class: "brand-title-mark" }),
       ),
       el("p", { class: "tagline" }, "build momentum, live well."),
-      el("p", { class: "lede" }, "A small space to think clearly about your money, your time, and what's next."),
+      el("p", { class: "lede" }, "I made this app for my teenage daughter who needed guidance. Now its our small space to think clearly about money, time, and what's next."),
+      el("p", { class: "lede" }, "A dynamic questionnaire, a model tuned to your season of life, and research grounded in your location come together to form a real plan you can discuss and refine with the help of AI."),
       el("div", { class: "field" },
         el("label", { for: "phone" }, "Your phone number"),
         el("input", {
@@ -636,29 +637,78 @@ const views = (() => {
   registerInput("hours", renderNumeric);
 
   // ───────── Plan ─────────
-  function revisionBanner(revisionStatus) {
+  function revisionBanner(revisionStatus, onRegenerate) {
     if (!revisionStatus || !revisionStatus.newer_available) return null;
     return el("div", { class: "revision-banner", role: "status" },
-      `A newer version of this season is available (v${revisionStatus.latest_revision}). ` +
-      `Generating a new plan will use the new version.`,
+      el("p", { class: "revision-banner-text" },
+        `A newer version of this season is available (v${revisionStatus.latest_revision}). ` +
+        `Generating a new plan will use the new version.`,
+      ),
+      onRegenerate
+        ? el("button",
+            { class: "btn revision-banner-btn", onclick: onRegenerate },
+            "Generate new version")
+        : null,
     );
   }
 
+  function splitPlanSections(src) {
+    // Plans are written as a sequence of `### Heading` sections.
+    // Group lines under each H3 so the UI can render collapsible cards.
+    const lines = (src || "").replace(/\r\n/g, "\n").split("\n");
+    const sections = [];
+    let preamble = [];
+    let current = null;
+    for (const line of lines) {
+      const m = line.match(/^###(?!#)\s+(.+?)\s*$/);
+      if (m) {
+        if (current) sections.push(current);
+        current = { title: m[1], body: [] };
+      } else if (current) {
+        current.body.push(line);
+      } else {
+        preamble.push(line);
+      }
+    }
+    if (current) sections.push(current);
+    return { preamble: preamble.join("\n").trim(), sections };
+  }
+
   function plan(profile, seasonId, planText, sources, version, totalVersions, onRegenerate, onRevise, revisionStatus) {
-    const html = md.render(planText);
+    const { preamble, sections: allSections } = splitPlanSections(planText);
+    // Drop the markdown-embedded "Sources" section — it's a subset of the
+    // canonical `sources` array, which we render as its own card below.
+    const sections = allSections.filter(s => !/^sources\b/i.test(s.title.trim()));
+    const talkBtn = () => el("a",
+      { class: "btn btn-accent", href: `#/season/${seasonId}/plan/${version}/chat` },
+      "Talk it through");
+
+    const sectionEls = sections.length
+      ? sections.map((s, i) => el("details",
+          { class: "plan-section" + (i === 0 ? " plan-section-first" : ""), open: i === 0 },
+          el("summary", { class: "plan-section-summary" }, s.title),
+          el("div", { class: "plan-content", html: md.render(s.body.join("\n")) }),
+        ))
+      : [el("div", { class: "plan-content", html: md.render(planText) })];
+
     return el("div", {},
-      revisionBanner(revisionStatus),
-      el("div", { class: "plan-content", html }),
-      sources && sources.length ? el("details", { class: "sources" },
-        el("summary", {}, `Sources (${sources.length})`),
-        el("ul", {}, ...sources.map(u => el("li", {}, el("a", { href: u, target: "_blank", rel: "noopener noreferrer" }, u)))),
+      revisionBanner(revisionStatus, onRegenerate),
+      el("div", { class: "btn-row plan-top-actions" }, talkBtn()),
+      preamble ? el("div", { class: "plan-content plan-preamble", html: md.render(preamble) }) : null,
+      ...sectionEls,
+      sources && sources.length ? el("details", { class: "plan-section plan-sources" },
+        el("summary", { class: "plan-section-summary" }, `Sources (${sources.length})`),
+        el("div", { class: "plan-content" },
+          el("ul", { class: "plan-sources-list" }, ...sources.map(u =>
+            el("li", {}, el("a", { href: u, target: "_blank", rel: "noopener noreferrer" }, u)))),
+        ),
       ) : null,
       el("div", { class: "btn-row" },
-        el("a", { class: "btn btn-accent", href: `#/season/${seasonId}/plan/${version}/chat` }, "Talk it through"),
-        el("button", { class: "btn btn-secondary", onclick: onRevise }, "Revise my answers"),
+        talkBtn(),
+        el("button", { class: "btn", onclick: onRevise }, "Revise my answers"),
         el("button", { class: "btn", onclick: onRegenerate }, "Generate a new version"),
       ),
-      el("p", { class: "progress-label" },
+      el("p", { class: "progress-label plan-version-label" },
         `Plan v${version}` +
           (revisionStatus && revisionStatus.plan_revision ? ` · pack v${revisionStatus.plan_revision}` : "") +
           (totalVersions > 1 ? ` of ${totalVersions} — ` : ""),

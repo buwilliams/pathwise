@@ -248,7 +248,51 @@
   border-radius: var(--radius);
   padding: var(--space-5);
   font-size: 1.02rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
+.plan-content a { word-break: break-all; }
+
+/* Collapsible plan sections (one card per H3). */
+.plan-top-actions { margin-top: 0; margin-bottom: var(--space-4); }
+.plan-section {
+  background: var(--paper);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-3);
+  box-shadow: 0 1px 0 rgba(15, 27, 45, 0.04), 0 4px 16px rgba(15, 27, 45, 0.04);
+  overflow: hidden;
+}
+.plan-section-summary {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  padding: var(--space-4) var(--space-5);
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap);
+}
+.plan-section-summary::-webkit-details-marker { display: none; }
+.plan-section-summary::before {
+  content: "▸";
+  color: var(--terracotta);
+  font-size: 0.85em;
+  transition: transform .15s var(--ease);
+  flex-shrink: 0;
+}
+.plan-section[open] > .plan-section-summary::before { transform: rotate(90deg); }
+.plan-section > .plan-content {
+  border-radius: 0;
+  padding-top: 0;
+}
+.plan-preamble { margin-bottom: var(--space-3); }
+.plan-version-label { margin-top: var(--space-5); }
+.plan-sources-list { margin: 0; padding-left: var(--space-5); font-size: 0.95rem; }
+.plan-sources-list li { word-break: break-all; margin-bottom: var(--space-2); }
 .plan-content h1, .plan-content h2, .plan-content h3, .plan-content h4 {
   margin-top: var(--space-5);
   margin-bottom: var(--space-3);
@@ -591,6 +635,8 @@
   font-size: 0.9rem;
   color: var(--ink);
 }
+.revision-banner-text { margin-bottom: var(--space-3); }
+.revision-banner-btn { width: auto; align-self: flex-start; }
 .revision-pill {
   display: inline-block;
   font-size: 0.7rem;
