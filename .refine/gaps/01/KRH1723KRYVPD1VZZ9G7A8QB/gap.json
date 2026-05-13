@@ -2,14 +2,14 @@
   "id": "01KRH1723KRYVPD1VZZ9G7A8QB",
   "name": "The math is the product",
   "created": "2026-05-13T16:02:46Z",
-  "updated": "2026-05-13T16:17:01Z",
+  "updated": "2026-05-13T16:17:03Z",
   "rounds": [
     {
       "reporter": "Buddy Williams",
       "actual": "The plan is prose. Users fill the questionnaire once, get a static markdown doc with numbers baked in, and the math (paths × stages × weights × thresholds, $\\rho$, $\\delta$, $R(s_j)$, momentum) sits behind the LLM as a hidden engine.",
       "target": "The math is the product. Users land in an interactive sandbox where they slide stage durations, perturb $\\rho$ and $\\delta$, watch $r$ go red as the viable filter fails, and see the Pareto frontier of $\\{Momentum, R_{\\min}\\}$ shift across paths — with Monte Carlo on uncertain inputs. The LLM narrates what the user discovered, instead of delivering the answer.",
       "created": "2026-05-13T16:02:46Z",
-      "updated": "2026-05-13T16:17:01Z",
+      "updated": "2026-05-13T16:17:03Z",
       "logs": [
         {
           "datetime": "2026-05-13T16:09:03Z",
@@ -43,6 +43,21 @@
           "severity": "info",
           "category": "cli",
           "message": "Agent run completed",
+          "actor": "runner"
+        },
+        {
+          "datetime": "2026-05-13T16:17:01Z",
+          "severity": "info",
+          "category": "git",
+          "message": "Auto-stashed remaining uncommitted changes before merge",
+          "actor": "runner"
+        },
+        {
+          "datetime": "2026-05-13T16:17:03Z",
+          "severity": "warn",
+          "category": "git",
+          "message": "Auto-stash pop failed — your uncommitted changes remain in `git stash`; resolve manually with `git stash list`",
+          "details": "error: Your local changes to the following files would be overwritten by merge:\n\t.refine/gaps/01/KRH1723KRYVPD1VZZ9G7A8QB/gap.json\nPlease commit your changes or stash them before you merge.\nAborting\n",
           "actor": "runner"
         }
       ]
