@@ -1,0 +1,16 @@
+{
+  "id": "01KRH1723KRYVPD1VZZ9G7A8QB",
+  "name": "The math is the product",
+  "created": "2026-05-13T16:02:46Z",
+  "updated": "2026-05-13T16:02:46Z",
+  "rounds": [
+    {
+      "reporter": "Buddy Williams",
+      "actual": "The plan is prose. Users fill the questionnaire once, get a static markdown doc with numbers baked in, and the math (paths × stages × weights × thresholds, $\\rho$, $\\delta$, $R(s_j)$, momentum) sits behind the LLM as a hidden engine.",
+      "target": "The math is the product. Users land in an interactive sandbox where they slide stage durations, perturb $\\rho$ and $\\delta$, watch $r$ go red as the viable filter fails, and see the Pareto frontier of $\\{Momentum, R_{\\min}\\}$ shift across paths — with Monte Carlo on uncertain inputs. The LLM narrates what the user discovered, instead of delivering the answer.",
+      "created": "2026-05-13T16:02:46Z",
+      "updated": "2026-05-13T16:02:46Z",
+      "logs": []
+    }
+  ]
+}
