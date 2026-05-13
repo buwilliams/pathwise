@@ -252,6 +252,9 @@ const views = (() => {
       const secondary = mine
         ? el("a", { class: "btn btn-secondary", href: `#/season/${p.id}` }, "Revise answers")
         : null;
+      const sandboxBtn = mine
+        ? el("a", { class: "btn btn-secondary", href: `#/season/${p.id}/sandbox` }, "Path sandbox")
+        : null;
       return card(
         el("h2", {}, p.name),
         el("p", { class: "season-age" }, formatAge(p)),
@@ -260,7 +263,7 @@ const views = (() => {
           `${mine.plan_count} plan${mine.plan_count === 1 ? "" : "s"}` +
           (mine.chat_count ? ` · ${mine.chat_count} conversation${mine.chat_count === 1 ? "" : "s"}` : ""),
         ) : null,
-        el("div", { class: "btn-row" }, cta, secondary),
+        el("div", { class: "btn-row" }, cta, secondary, sandboxBtn),
       );
     });
 
@@ -705,6 +708,7 @@ const views = (() => {
       ) : null,
       el("div", { class: "btn-row" },
         talkBtn(),
+        el("a", { class: "btn btn-secondary", href: `#/season/${seasonId}/sandbox` }, "Play with the math"),
         el("button", { class: "btn", onclick: onRevise }, "Revise my answers"),
         el("button", { class: "btn", onclick: onRegenerate }, "Generate a new version"),
       ),

@@ -68,5 +68,10 @@ const api = (() => {
     regenerateFromChat: (seasonId, v) => request("POST", `/seasons/${seasonId}/plans/${v}/chat/regenerate`),
     listDocs:                    () => request("GET", "/technical"),
     getDoc: (slug)             => request("GET", `/technical/${slug}`),
+    sandbox: (seasonId)        => request("GET", `/seasons/${seasonId}/sandbox`),
+    simulateSandbox: (seasonId, config) =>
+      request("POST", `/seasons/${seasonId}/sandbox/simulate`, { config }),
+    narrateSandbox: (seasonId, config, focus) =>
+      request("POST", `/seasons/${seasonId}/sandbox/narrate`, { config, focus }),
   };
 })();
