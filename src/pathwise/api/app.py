@@ -14,6 +14,7 @@ from pathwise.api import (
     plans,
     profile,
     questionnaire,
+    sandbox,
     seasons,
 )
 from pathwise.config import get_settings
@@ -39,6 +40,7 @@ def create_app() -> FastAPI:
     app.include_router(seasons.router)
     app.include_router(questionnaire.router)
     app.include_router(plans.router)
+    app.include_router(sandbox.router)
     app.include_router(chat.router)
     app.include_router(checkins.router)
     app.include_router(docs.router)

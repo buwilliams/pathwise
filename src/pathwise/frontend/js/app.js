@@ -133,6 +133,8 @@
       if (sLatest) return showLatestPlan(me, sLatest[1]);
       const sPlans = route.match(/^season\/([^/]+)\/plans$/);
       if (sPlans) return showPlanHistory(me, sPlans[1]);
+      const sSandbox = route.match(/^season\/([^/]+)\/sandbox$/);
+      if (sSandbox) return showSandbox(me, sSandbox[1]);
       const sQuiz = route.match(/^season\/([^/]+)$/);
       if (sQuiz) return showQuestionnaire(me, sQuiz[1]);
 
@@ -440,6 +442,29 @@
         }
       },
       planRes.revision_status,
+    ));
+  }
+
+  // ───────── Sandbox (the math is the product) ─────────
+  async function showSandbox(me, seasonId) {
+    show(views.loading("Loading the sandbox…"));
+    let initial;
+    try {
+      initial = await api.sandbox(seasonId);
+    } catch (e) {
+      if (e.status === 400 && e.code === "questionnaire_incomplete") {
+        views.toast(
+          "Finish the questionnaire first — the sandbox needs your baseline life-state.",
+        );
+        location.hash = `#/season/${seasonId}`;
+        return;
+      }
+      throw e;
+    }
+    show(sandboxView.root(
+      initial,
+      async (config) => api.simulateSandbox(seasonId, config),
+      async (config, focus) => api.narrateSandbox(seasonId, config, focus || null),
     ));
   }
 
