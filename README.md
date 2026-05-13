@@ -36,9 +36,20 @@ uv run pathwise serve --reload   # FastAPI + uvicorn on the configured host/port
 uv run pytest                    # full test suite
 ```
 
-The CLI groups commands by area: `pathwise user|auth|season|question|answer|plan ...`. Run any group with `--help` to see what's there. To inspect the live questionnaire schema for a season:
+The CLI groups commands by area: `pathwise user|auth|season|question|answer|plan|checkin ...`. Run any group with `--help` to see what's there. To inspect the live questionnaire schema for a season:
 
 ```bash
 uv run pathwise season show build-independence
 uv run pathwise question list
 ```
+
+## Check-ins
+
+`model.md` §2.4 is explicit that the artifact is a *policy* — re-optimize at every new observation — not a plan. The check-in loop (roadmap.md #1) is how that lives at runtime. Users post a tiny weekly observation of fast-moving `L` components (`b`, `η`, `ζ`, `q`); the drift engine flags any component that has fallen for several check-ins in a row so the next plan revision can respond instead of recomputing in the dark.
+
+```bash
+uv run pathwise checkin record --phone +1... --buffer-hours 12 --eta 1 --zeta 3 --q 4
+uv run pathwise checkin drift  --phone +1...
+```
+
+Same loop is exposed under `POST/GET /seasons/{season_id}/checkins` and `/checkins/drift` for the API.

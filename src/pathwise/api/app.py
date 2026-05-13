@@ -6,7 +6,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from pathwise.api import auth, chat, docs, plans, profile, questionnaire, seasons
+from pathwise.api import (
+    auth,
+    chat,
+    checkins,
+    docs,
+    plans,
+    profile,
+    questionnaire,
+    seasons,
+)
 from pathwise.config import get_settings
 
 
@@ -31,6 +40,7 @@ def create_app() -> FastAPI:
     app.include_router(questionnaire.router)
     app.include_router(plans.router)
     app.include_router(chat.router)
+    app.include_router(checkins.router)
     app.include_router(docs.router)
 
     @app.get("/healthz")

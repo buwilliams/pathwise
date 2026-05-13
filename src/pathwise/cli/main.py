@@ -11,6 +11,7 @@ from pathwise.core.auth import (
     AuthError,
     AuthService,
 )
+from pathwise.core.checkin import CheckinError, CheckinService
 from pathwise.core.ids import normalize_phone, user_id_for_phone
 from pathwise.core.plan import PlanError, generate_plan, list_plans, read_plan
 from pathwise.core.profile import ProfileService
@@ -410,6 +411,108 @@ def plan_show(
         _print_json(m)
     else:
         typer.echo(text)
+
+
+# ----------------------------------------------------------------------
+# checkin
+# ----------------------------------------------------------------------
+
+checkin_app = typer.Typer(
+    help="Record and inspect weekly check-ins (roadmap.md #1).",
+    no_args_is_help=True,
+)
+app.add_typer(checkin_app, name="checkin")
+
+
+@checkin_app.command("record")
+def checkin_record(
+    phone: Annotated[str, typer.Option(help="Phone, any reasonable format")],
+    season: Annotated[str, typer.Option()] = "build-independence",
+    b: Annotated[
+        float | None,
+        typer.Option("--buffer-hours", help="Buffer hours this week (0–168)"),
+    ] = None,
+    eta: Annotated[
+        float | None,
+        typer.Option("--eta", help="Net emotional impact (-2..+2)"),
+    ] = None,
+    zeta: Annotated[
+        float | None,
+        typer.Option("--zeta", help="Fitness practice (1..5)"),
+    ] = None,
+    q: Annotated[
+        float | None,
+        typer.Option("--q", help="Quality of time / energy (1..5)"),
+    ] = None,
+    note: Annotated[str, typer.Option(help="Optional free-text note")] = "",
+) -> None:
+    """Append a new check-in. Pass at least one observation."""
+    obs = {
+        k: v
+        for k, v in (("b", b), ("eta", eta), ("zeta", zeta), ("q", q))
+        if v is not None
+    }
+    if not obs:
+        typer.echo(
+            "Error: pass at least one of --buffer-hours, --eta, --zeta, --q",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+    user_id = _resolve_user_id(phone)
+    svc = CheckinService(_store())
+    try:
+        checkin = svc.record(
+            user_id=user_id,
+            season_id=season,
+            observations=obs,
+            note=note or None,
+        )
+    except CheckinError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    _print_json(
+        {
+            "at": checkin.at,
+            "observations": checkin.observations,
+            "note": checkin.note,
+        }
+    )
+
+
+@checkin_app.command("list")
+def checkin_list(
+    phone: Annotated[str, typer.Option()],
+    season: Annotated[str, typer.Option()] = "build-independence",
+    limit: Annotated[int, typer.Option(help="Most recent N to show")] = 50,
+) -> None:
+    user_id = _resolve_user_id(phone)
+    checkins = CheckinService(_store()).list(user_id, season)
+    if not checkins:
+        typer.echo("(no check-ins yet)")
+        return
+    _print_json(
+        [
+            {"at": c.at, "observations": c.observations, "note": c.note}
+            for c in checkins[-limit:]
+        ]
+    )
+
+
+@checkin_app.command("drift")
+def checkin_drift(
+    phone: Annotated[str, typer.Option()],
+    season: Annotated[str, typer.Option()] = "build-independence",
+    falling_streak: Annotated[
+        int,
+        typer.Option(help="Consecutive falls needed for an alert"),
+    ] = 3,
+) -> None:
+    """Per-component direction + alerts on consecutive declines."""
+    user_id = _resolve_user_id(phone)
+    report = CheckinService(_store()).drift(
+        user_id, season, falling_streak=falling_streak
+    )
+    _print_json(report.to_jsonable())
 
 
 if __name__ == "__main__":
