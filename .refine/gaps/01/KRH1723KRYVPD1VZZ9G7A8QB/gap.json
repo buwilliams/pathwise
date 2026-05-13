@@ -2,20 +2,47 @@
   "id": "01KRH1723KRYVPD1VZZ9G7A8QB",
   "name": "The math is the product",
   "created": "2026-05-13T16:02:46Z",
-  "updated": "2026-05-13T16:09:03Z",
+  "updated": "2026-05-13T16:17:01Z",
   "rounds": [
     {
       "reporter": "Buddy Williams",
       "actual": "The plan is prose. Users fill the questionnaire once, get a static markdown doc with numbers baked in, and the math (paths × stages × weights × thresholds, $\\rho$, $\\delta$, $R(s_j)$, momentum) sits behind the LLM as a hidden engine.",
       "target": "The math is the product. Users land in an interactive sandbox where they slide stage durations, perturb $\\rho$ and $\\delta$, watch $r$ go red as the viable filter fails, and see the Pareto frontier of $\\{Momentum, R_{\\min}\\}$ shift across paths — with Monte Carlo on uncertain inputs. The LLM narrates what the user discovered, instead of delivering the answer.",
       "created": "2026-05-13T16:02:46Z",
-      "updated": "2026-05-13T16:09:03Z",
+      "updated": "2026-05-13T16:17:01Z",
       "logs": [
         {
           "datetime": "2026-05-13T16:09:03Z",
           "severity": "error",
           "category": "state",
           "message": "Runner restarted while this Gap was in-progress — marked failed",
+          "actor": "runner"
+        },
+        {
+          "datetime": "2026-05-13T16:16:58Z",
+          "severity": "info",
+          "category": "cli",
+          "message": "Done. The implementation is in place across two commits already on this branch:"
+        },
+        {
+          "datetime": "2026-05-13T16:16:58Z",
+          "severity": "info",
+          "category": "cli",
+          "message": "**`0dd6e9a` — Core, API, LLM, tests**\n- `core/sandbox.py` — override-aware re-scoring that threads ρ, δ, rent, car overhead, training hours, and income uplift through the v0.5 stage model; Pareto fron",
+          "details": "**`0dd6e9a` — Core, API, LLM, tests**\n- `core/sandbox.py` — override-aware re-scoring that threads ρ, δ, rent, car overhead, training hours, and income uplift through the v0.5 stage model; Pareto frontier of `{path_momentum, min_recoverability}`; Monte Carlo with seeded reproducibility and per-path `{p10, p50, p90}` + `P(viable)`.\n- `api/sandbox.py` — `GET /seasons/{id}/sandbox`, `POST /sandbox/simulate`, `POST /sandbox/narrate` (all gated on questionnaire completion).\n- `llm/narrate.py` — narrator that's handed the simulation JSON and is explicitly told *not* to recommend a path.\n- 12 unit tests + 5 integration tests."
+        },
+        {
+          "datetime": "2026-05-13T16:16:58Z",
+          "severity": "info",
+          "category": "cli",
+          "message": "**`856f6e5` — Frontend**\n- `frontend/js/sandbox.js` — root view, slider widget (live-display + `onchange` commit), SVG Pareto chart with R_min cutoff line and frontier polyline, per-path cards grouped",
+          "details": "**`856f6e5` — Frontend**\n- `frontend/js/sandbox.js` — root view, slider widget (live-display + `onchange` commit), SVG Pareto chart with R_min cutoff line and frontier polyline, per-path cards grouped by bucket with viability lights, ρ/δ sliders, stage rows that turn red when a viable filter fails, MC P10/P90 + viability% bands.\n- Global lever and Monte Carlo panels; narration panel with focus question.\n- Route `#/season/{id}/sandbox` in `app.js`; entry point on the season picker.\nAll 184 tests pass. Static asset and 401-on-no-auth confirmed by hitting the dev server."
+        },
+        {
+          "datetime": "2026-05-13T16:17:01Z",
+          "severity": "info",
+          "category": "cli",
+          "message": "Agent run completed",
           "actor": "runner"
         }
       ]
