@@ -2,7 +2,7 @@
   "id": "01KRGR7JFZX5ENJDPJRTCAPDFC",
   "name": "Build first feature",
   "created": "2026-05-13T13:25:45Z",
-  "updated": "2026-05-13T14:11:09Z",
+  "updated": "2026-05-13T15:45:23Z",
   "rounds": [
     {
       "reporter": "Buddy",
@@ -40,8 +40,44 @@
       "actual": "Unimplemented feature",
       "target": "There is a file in the project that outlines a new feature. Find that file and implement the feature.",
       "created": "2026-05-13T14:11:09Z",
-      "updated": "2026-05-13T14:11:09Z",
-      "logs": []
+      "updated": "2026-05-13T15:45:23Z",
+      "logs": [
+        {
+          "datetime": "2026-05-13T14:25:34Z",
+          "severity": "info",
+          "category": "cli",
+          "message": "Feature shipped. The file outlining the new feature was `roadmap.md`; its explicit \"one-bet version\" is #1 (\"Stop being a planner. Become a longitudinal policy\"). I built the kernel of that loop:\n- **",
+          "details": "Feature shipped. The file outlining the new feature was `roadmap.md`; its explicit \"one-bet version\" is #1 (\"Stop being a planner. Become a longitudinal policy\"). I built the kernel of that loop:\n- **`core/checkin.py`** — sparse observation model on `{b, η, ζ, q}`, append-only JSONL, per-component direction and consecutive-drop streak detection (default 3, matching roadmap.md's \"ζ has fallen for three weeks\" example).\n- **API** — `POST/GET /seasons/{season_id}/checkins` and `/checkins/drift`.\n- **CLI** — `pathwise checkin record|list|drift`.\n- **Tests** — 18 new tests (13 unit, 5 integration); full suite green at 167 passed.\nSMS scheduling/round-tripping is deliberately a separate layer that plugs into this data model. Commit: `a1ab5b6`."
+        },
+        {
+          "datetime": "2026-05-13T14:25:35Z",
+          "severity": "info",
+          "category": "cli",
+          "message": "Agent run completed",
+          "actor": "runner"
+        },
+        {
+          "datetime": "2026-05-13T14:38:18Z",
+          "severity": "error",
+          "category": "git",
+          "message": "Working copy has uncommitted changes on `main`",
+          "actor": "refine"
+        },
+        {
+          "datetime": "2026-05-13T15:40:27Z",
+          "severity": "error",
+          "category": "git",
+          "message": "Working copy has uncommitted changes on `main`",
+          "actor": "refine"
+        },
+        {
+          "datetime": "2026-05-13T15:45:23Z",
+          "severity": "error",
+          "category": "git",
+          "message": "Working copy has uncommitted changes on `main`",
+          "actor": "refine"
+        }
+      ]
     }
   ]
 }
