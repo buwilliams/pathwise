@@ -1,0 +1,31 @@
+{
+  "id": "01KRGR7JFZX5ENJDPJRTCAPDFC",
+  "name": "Build first feature",
+  "created": "2026-05-13T13:25:45Z",
+  "updated": "2026-05-13T13:33:44Z",
+  "rounds": [
+    {
+      "reporter": "Buddy",
+      "actual": "Unimplemented feature",
+      "target": "There is a file in the project that outlines a new feature. Find that file and implement the feature.",
+      "created": "2026-05-13T13:25:45Z",
+      "updated": "2026-05-13T13:33:44Z",
+      "logs": [
+        {
+          "datetime": "2026-05-13T13:33:44Z",
+          "severity": "info",
+          "category": "cli",
+          "message": "Done. Implemented the LLM-driven Import extraction feature called out in spec.md (Features → Gap Manager → Import), README's \"Caveats / known scope\", and the placeholder comment in `refine_web/api.py`",
+          "details": "Done. Implemented the LLM-driven Import extraction feature called out in spec.md (Features → Gap Manager → Import), README's \"Caveats / known scope\", and the placeholder comment in `refine_web/api.py`.\n**What changed:**\n- New `refine_runner/import_extract.py`: spawns `claude --print` with a structured prompt, parses JSON array out of the output (tolerant of fences/prose), normalizes drafts, and falls back to paragraph splitting if the CLI is missing/errors/times out.\n- New `M_EXTRACT_GAPS` IPC method with handler in `refine_runner/runner.py`.\n- `refine_web/api.py` `import_extract` now routes through IPC instead of doing paragraph splitting inline.\n- UI surfaces fallback path via a toast when `source === \"fallback\"`.\n- README updated; smoke + integration tests cover the wiring.\n**Test results:** smoke_test passes (`source=llm, 2 drafts` since `claude` is on this host's PATH); integration_test passes (only validates the 400 path to honor the test's \"no real Claude CLI\" contract)."
+        },
+        {
+          "datetime": "2026-05-13T13:33:44Z",
+          "severity": "info",
+          "category": "cli",
+          "message": "Agent run completed",
+          "actor": "runner"
+        }
+      ]
+    }
+  ]
+}

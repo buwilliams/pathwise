@@ -1,0 +1,5 @@
+# refine state — derived from gap.json files; not worth committing.
+index.sqlite
+index.sqlite-wal
+index.sqlite-shm
+run/

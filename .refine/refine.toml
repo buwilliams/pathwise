@@ -1,0 +1,15 @@
+# refine — per-project configuration. Commit this file alongside the
+# client repo's source. See README + spec.md for the conceptual model.
+
+# Path to the client repo, relative to this file (the volume root sits
+# inside the client repo).
+client_repo = ".."
+
+# Unix domain socket where the host runner listens. Both the host runner and
+# the Docker webapp container access this same file via the volume-root
+# bind mount, so the path must live under the volume root.
+runner_socket = "./run/runner.sock"
+
+[web]
+host = "0.0.0.0"
+port = 8080
